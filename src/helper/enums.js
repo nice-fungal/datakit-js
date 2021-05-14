@@ -28,6 +28,10 @@ export var ResourceType = {
   OTHER: 'other'
 }
 
+export var ActionType = {
+  CLICK: 'click',
+  CUSTOM: 'custom'
+}
 export var RumEventType = {
   ACTION: 'action',
   ERROR: 'error',

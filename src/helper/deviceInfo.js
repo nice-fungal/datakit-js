@@ -222,6 +222,7 @@ var MethodLibrary = {
     var _this = this
     var u = VariableLibrary.navigator.userAgent || {}
     _this.osVersion = ''
+    _this.osMajor = ''
     // 系统版本信息
     var osVersion = {
       Windows: function () {
@@ -263,7 +264,14 @@ var MethodLibrary = {
         _this.osVersion = ''
       }
     }
-    return _this.osVersion
+    if (_this.osVersion) {
+      _this.osMajor =
+        _this.osVersion.split('.').length && _this.osVersion.split('.')[0]
+    }
+    return {
+      version: _this.osVersion,
+      osMajor: _this.osMajor
+    }
   },
   // 获取横竖屏状态
   getOrientationStatu: function () {
@@ -545,6 +553,7 @@ var MethodLibrary = {
       }
     }
     _this.browserVersion = ''
+    _this.browserMajor = ''
     if (browerVersionMap[_this.browser]) {
       _this.browserVersion = browerVersionMap[_this.browser]()
       if (_this.browserVersion == u) {
@@ -575,11 +584,16 @@ var MethodLibrary = {
     } else if (_this.browser == 'Yandex') {
       _this.engine = 'Blink'
     }
-
+    if (_this.browserVersion) {
+      _this.browserMajor =
+        _this.browserVersion.split('.').length &&
+        this.browserVersion.split('.')[0]
+    }
     return {
       browser: _this.browser,
       browserVersion: _this.browserVersion,
-      engine: _this.engine
+      engine: _this.engine,
+      browserMajor: _this.browserMajor
     }
   },
   // 获取地理位置
@@ -601,9 +615,12 @@ var MethodLibrary = {
 
 export default {
   os: MethodLibrary.getOS(),
-  osVersion: MethodLibrary.getOSVersion(),
+  osVersion: MethodLibrary.getOSVersion().version,
+  osVersionMajor: MethodLibrary.getOSVersion().osMajor,
   browser: MethodLibrary.getBrowserInfo().browser,
   browserVersion: MethodLibrary.getBrowserInfo().browserVersion,
+  browserVersionMajor: MethodLibrary.getBrowserInfo().browserMajor,
   screenSize: window.screen.width + '*' + window.screen.height,
-  networkType: MethodLibrary.getNetwork()
+  networkType: MethodLibrary.getNetwork(),
+  divice: MethodLibrary.getDeviceType()
 }

@@ -1,9 +1,14 @@
 import {
   msToNs,
-  getTimestamp,
+  getStatusGroup,
   UUID,
+  preferredTimeStamp,
   extend2Lev,
-  urlParse
+  relativeToClocks,
+  urlParse,
+  getQueryParamsFromUrl,
+  replaceNumberCharByPath,
+  jsonStringify
 } from '../../helper/tools'
 import { RequestType, ResourceType, RumEventType } from '../../helper/enums'
 import { LifeCycleEventType } from '../../helper/lifeCycle'
@@ -22,7 +27,7 @@ export function startResourceCollection(lifeCycle, configuration, session) {
   lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, function (request) {
     if (session.isTrackedWithResource()) {
       lifeCycle.notify(
-        LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED,
+        LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
         processRequest(request)
       )
     }
@@ -37,59 +42,53 @@ export function startResourceCollection(lifeCycle, configuration, session) {
         !isRequestKind(entry)
       ) {
         lifeCycle.notify(
-          LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED,
+          LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
           processResourceEntry(entry)
         )
       }
     }
   )
 }
-function getStatusGroup(status) {
-  if (!status) return status
-  return (
-    String(status).substr(0, 1) + String(status).substr(1).replace(/\d*/g, 'x')
-  )
-}
+
 function processRequest(request) {
   var type =
     request.type === RequestType.XHR ? ResourceType.XHR : ResourceType.FETCH
 
   var matchingTiming = matchRequestTiming(request)
-  var startTime = matchingTiming ? matchingTiming.startTime : request.startTime
+  var startClocks = matchingTiming
+    ? relativeToClocks(matchingTiming.startTime)
+    : request.startClocks
   var correspondingTimingOverrides = matchingTiming
-    ? computePerformanceEntryMetricsV2(matchingTiming)
+    ? computePerformanceEntryMetrics(matchingTiming)
     : undefined
   var tracingInfo = computeRequestTracingInfo(request)
   var urlObj = urlParse(request.url).getParse()
   var resourceEvent = extend2Lev(
     {
-      date: getTimestamp(startTime),
+      date: preferredTimeStamp(startClocks),
       resource: {
         type: type,
-        load: msToNs(request.duration),
+        duration: msToNs(request.duration),
         method: request.method,
         status: request.status,
         statusGroup: getStatusGroup(request.status),
         url: request.url,
         urlHost: urlObj.Host,
         urlPath: urlObj.Path,
-        responseHeader: request.responseHeader,
-        responseConnection: request.responseConnection,
-        responseServer: request.responseServer,
-        responseContentType: request.responseContentType,
-        responseContentEncoding: request.responseContentEncoding
+        urlPathGroup: replaceNumberCharByPath(urlObj.Path),
+        urlQuery: jsonStringify(getQueryParamsFromUrl(request.url))
       },
       type: RumEventType.RESOURCE
     },
     tracingInfo,
     correspondingTimingOverrides
   )
-  return { startTime: startTime, rawRumEvent: resourceEvent }
+  return { startTime: startClocks.relative, rawRumEvent: resourceEvent }
 }
 
 function processResourceEntry(entry) {
   var type = computeResourceKind(entry)
-  var entryMetrics = computePerformanceEntryMetricsV2(entry)
+  var entryMetrics = computePerformanceEntryMetrics(entry)
   var tracingInfo = computeEntryTracingInfo(entry)
   var urlObj = urlParse(entry.name).getParse()
   var statusCode = ''
@@ -98,14 +97,17 @@ function processResourceEntry(entry) {
   } else if (isCacheHit(entry)) {
     statusCode = 200
   }
+  var startClocks = relativeToClocks(entry.startTime)
   var resourceEvent = extend2Lev(
     {
-      date: getTimestamp(entry.startTime),
+      date: preferredTimeStamp(startClocks),
       resource: {
         type: type,
         url: entry.name,
         urlHost: urlObj.Host,
         urlPath: urlObj.Path,
+        urlPathGroup: replaceNumberCharByPath(urlObj.Path),
+        urlQuery: jsonStringify(getQueryParamsFromUrl(entry.name)),
         method: 'GET',
         status: statusCode,
         statusGroup: getStatusGroup(statusCode)
@@ -115,15 +117,15 @@ function processResourceEntry(entry) {
     tracingInfo,
     entryMetrics
   )
-  return { startTime: entry.startTime, rawRumEvent: resourceEvent }
+  return { startTime: startClocks.relative, rawRumEvent: resourceEvent }
 }
 
-function computePerformanceEntryMetricsV2(timing) {
+function computePerformanceEntryMetrics(timing) {
   return {
     resource: extend2Lev(
       {},
       {
-        load: computePerformanceResourceDuration(timing),
+        duration: computePerformanceResourceDuration(timing),
         size: computeSize(timing)
       },
       computePerformanceResourceDetails(timing)

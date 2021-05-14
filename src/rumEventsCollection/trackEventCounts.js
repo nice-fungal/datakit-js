@@ -14,7 +14,7 @@ export function trackEventCounts(lifeCycle, callback) {
   }
 
   var subscription = lifeCycle.subscribe(
-    LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED,
+    LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
     function (data) {
       var rawRumEvent = data.rawRumEvent
       switch (rawRumEvent.type) {

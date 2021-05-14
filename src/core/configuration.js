@@ -1,4 +1,10 @@
-import { ONE_KILO_BYTE, ONE_SECOND, extend2Lev } from '../helper/tools'
+import {
+  ONE_KILO_BYTE,
+  ONE_SECOND,
+  extend2Lev,
+  isArray,
+  includes
+} from '../helper/tools'
 import { getCurrentSite } from './cookie'
 import { getPathName, haveSameOrigin } from '../helper/urlPolyfill'
 export var DEFAULT_CONFIGURATION = {
@@ -22,7 +28,9 @@ export var DEFAULT_CONFIGURATION = {
    */
   batchBytesLimit: 16 * ONE_KILO_BYTE,
   datakitUrl: '',
-  allowedDDTracingOrigins: [] //
+  trackInteractions: false, //是否开启交互action收集
+  allowedDDTracingOrigins: [], //
+  beforeSend: function (event) {}
 }
 export function buildCookieOptions(userConfiguration) {
   var cookieOptions = {}
@@ -41,6 +49,11 @@ function getDatakitUrlUrl(url) {
   return url + '/v1/write/rum'
 }
 export function commonInit(userConfiguration, buildEnv) {
+  var enableExperimentalFeatures = isArray(
+    userConfiguration.enableExperimentalFeatures
+  )
+    ? userConfiguration.enableExperimentalFeatures
+    : []
   var transportConfiguration = {
     applicationId: userConfiguration.applicationId,
     env: userConfiguration.env || '',
@@ -50,9 +63,26 @@ export function commonInit(userConfiguration, buildEnv) {
     datakitUrl: getDatakitUrlUrl(
       userConfiguration.datakitUrl || userConfiguration.datakitOrigin
     ),
-    allowedDDTracingOrigins: userConfiguration.allowedDDTracingOrigins || [],
     tags: userConfiguration.tags || [],
+    isEnabled: (feature) => includes(enableExperimentalFeatures, feature),
     cookieOptions: buildCookieOptions(userConfiguration)
+  }
+  if ('allowedTracingOrigins' in userConfiguration) {
+    transportConfiguration.allowedTracingOrigins =
+      userConfiguration.allowedTracingOrigins
+  }
+
+  if ('sampleRate' in userConfiguration) {
+    transportConfiguration.sampleRate = userConfiguration.sampleRate
+  }
+
+  if ('resourceSampleRate' in userConfiguration) {
+    transportConfiguration.resourceSampleRate =
+      userConfiguration.resourceSampleRate
+  }
+
+  if ('trackInteractions' in userConfiguration) {
+    transportConfiguration.trackInteractions = !!userConfiguration.trackInteractions
   }
   return extend2Lev(DEFAULT_CONFIGURATION, transportConfiguration)
 }

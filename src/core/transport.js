@@ -6,10 +6,11 @@ import {
   each,
   isNumber,
   isArray,
+  extend,
   isString
 } from '../helper/tools'
 import { DOM_EVENT } from '../helper/enums'
-import dataMap from './dataMap'
+import dataMap, { commonTags } from './dataMap'
 // https://en.wikipedia.org/wiki/UTF-8
 var HAS_MULTI_BYTES_CHARACTERS = /[^\u0000-\u007F]/
 function addBatchPrecision(url) {
@@ -88,7 +89,8 @@ batch.prototype = {
         var rowStr = ''
         rowStr += key + ','
         var tagsStr = []
-        each(value.tags, function (value_path, _key) {
+        var tags = extend({}, commonTags, value.tags)
+        each(tags, function (value_path, _key) {
           var _value = findByPath(message, value_path)
           if (_value || isNumber(_value)) {
             tagsStr.push(escapeRowData(_key) + '=' + escapeRowData(_value))
@@ -125,6 +127,7 @@ batch.prototype = {
             }
           }
         })
+        console.log(tagsStr, fieldsStr, 'tagsStr, fileStr====')
         if (tagsStr.length) {
           rowStr += tagsStr.join(',')
         }

@@ -509,71 +509,28 @@ export var base64Encode = function (data) {
 
   return enc
 }
-export var UUID = (function () {
-  var T = function () {
-    var d = 1 * new Date(),
-      i = 0
-    while (d == 1 * new Date()) {
-      i++
-    }
-    return d.toString(16) + i.toString(16)
+/**
+ * UUID v4
+ * from https://gist.github.com/jed/982883
+ */
+export function UUID(placeholder) {
+  return placeholder
+    ? // eslint-disable-next-line  no-bitwise
+      (
+        parseInt(placeholder, 10) ^
+        ((Math.random() * 16) >> (parseInt(placeholder, 10) / 4))
+      ).toString(16)
+    : `${1e7}-${1e3}-${4e3}-${8e3}-${1e11}`.replace(/[018]/g, UUID)
+}
+
+// 替换url包含数字的路由
+export function replaceNumberCharByPath(path) {
+  if (path) {
+    return path.replace(/\/([^\/]*)\d([^\/]*)/g, '/?')
+  } else {
+    return ''
   }
-  var R = function () {
-    return Math.random().toString(16).replace('.', '')
-  }
-  var UA = function (n) {
-    var ua = navigator.userAgent,
-      i,
-      ch,
-      buffer = [],
-      ret = 0
-
-    function xor(result, byte_array) {
-      var j,
-        tmp = 0
-      for (j = 0; j < byte_array.length; j++) {
-        tmp |= buffer[j] << (j * 8)
-      }
-      return result ^ tmp
-    }
-
-    for (i = 0; i < ua.length; i++) {
-      ch = ua.charCodeAt(i)
-      buffer.unshift(ch & 0xff)
-      if (buffer.length >= 4) {
-        ret = xor(ret, buffer)
-        buffer = []
-      }
-    }
-
-    if (buffer.length > 0) {
-      ret = xor(ret, buffer)
-    }
-
-    return ret.toString(16)
-  }
-
-  return function () {
-    var se = String(screen.height * screen.width)
-    if (se && /\d{5,}/.test(se)) {
-      se = se.toString(16)
-    } else {
-      se = String(Math.random() * 31242)
-        .replace('.', '')
-        .slice(0, 8)
-    }
-    var val = T() + '-' + R() + '-' + UA() + '-' + se + '-' + T()
-    if (val) {
-      return val
-    } else {
-      return (
-        String(Math.random()) +
-        String(Math.random()) +
-        String(Math.random())
-      ).slice(2, 15)
-    }
-  }
-})()
+}
 export var getQueryParam = function (url, param) {
   param = param.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]')
   url = decodeURIComponent(url)
@@ -1305,6 +1262,12 @@ export var stringSplice = function (src, k, e, sp) {
   var pe = pe < ps ? src.length : src.indexOf(e, ps)
   return src.substring(ps, pe)
 }
+export function getStatusGroup(status) {
+  if (!status) return status
+  return (
+    String(status).substr(0, 1) + String(status).substr(1).replace(/\d*/g, 'x')
+  )
+}
 export var getReferrer = function () {
   var ref = document.referrer.toLowerCase()
   var re = /^[^\?&#]*.swf([\?#])?/
@@ -1390,10 +1353,27 @@ export function msToNs(duration) {
   }
   return round(duration * 1e6, 0)
 }
+export function mapValues(object, fn) {
+  var newObject = {}
+  each(object, function (value, key) {
+    newObject[key] = fn(value)
+  })
+
+  return newObject
+}
+
+export function toServerDuration(duration) {
+  if (!isNumber(duration)) {
+    return duration
+  }
+  return round(duration * 1e6, 0)
+}
 export function getRelativeTime(timestamp) {
   return timestamp - getNavigationStart()
 }
-
+export function preferredNow() {
+  return relativeNow()
+}
 export function getTimestamp(relativeTime) {
   return Math.floor(getNavigationStart() + relativeTime)
 }
@@ -1411,6 +1391,18 @@ export function elapsed(start, end) {
   return end - start
 }
 
+export function clocksOrigin() {
+  return { relative: 0, timeStamp: getNavigationStart() }
+}
+export function preferredClock(clocks) {
+  return clocks.relative
+}
+export function preferredTimeStamp(clocks) {
+  return getTimestamp(clocks.relative)
+}
+export function relativeToClocks(relative) {
+  return { relative: relative, timeStamp: getTimestamp(relative) }
+}
 /**
  * Navigation start slightly change on some rare cases
  */
@@ -1429,7 +1421,7 @@ export function findByPath(source, path) {
   var pathArr = path.split('.')
   while (pathArr.length) {
     var key = pathArr.shift()
-    if (key in source && hasOwnProperty.call(source, key)) {
+    if (source && key in source && hasOwnProperty.call(source, key)) {
       source = source[key]
     } else {
       return undefined
@@ -1500,22 +1492,31 @@ export function createContextManager() {
   var context = {}
 
   return {
-    get() {
+    get: function () {
       return context
     },
 
-    add(key, value) {
+    add: function (key, value) {
       context[key] = value
     },
 
-    remove(key) {
+    remove: function (key) {
       delete context[key]
     },
 
-    set(newContext) {
+    set: function (newContext) {
       context = newContext
     }
   }
+}
+export function find(array, predicate) {
+  for (var i = 0; i < array.length; i += 1) {
+    var item = array[i]
+    if (predicate(item, i, array)) {
+      return item
+    }
+  }
+  return undefined
 }
 
 export function isPercentage(value) {

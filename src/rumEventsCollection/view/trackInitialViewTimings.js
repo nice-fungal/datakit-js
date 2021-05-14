@@ -1,45 +1,42 @@
+import { addEventListeners, elapsed, extend } from '../../helper/tools'
 import { DOM_EVENT } from '../../helper/enums'
-import { addEventListeners, extend, elapsed } from '../../helper/tools'
 import { LifeCycleEventType } from '../../helper/lifeCycle'
 import { trackFirstHidden } from './trackFirstHidden'
 
-export function trackTimings(lifeCycle, callback) {
+export function trackInitialViewTimings(lifeCycle, callback) {
   var timings = {}
   function setTimings(newTimings) {
-    timings = extend({}, timings, newTimings)
+    timings = extend(timings, newTimings)
     callback(timings)
   }
   var _trackNavigationTimings = trackNavigationTimings(lifeCycle, setTimings)
+  var stopNavigationTracking = _trackNavigationTimings.stop
   var _trackFirstContentfulPaint = trackFirstContentfulPaint(
     lifeCycle,
     function (firstContentfulPaint) {
       setTimings({ firstContentfulPaint: firstContentfulPaint })
     }
   )
-
+  var stopFCPTracking = _trackFirstContentfulPaint.stop
   var _trackLargestContentfulPaint = trackLargestContentfulPaint(
     lifeCycle,
     window,
     function (largestContentfulPaint) {
-      setTimings({
-        largestContentfulPaint: largestContentfulPaint
-      })
+      setTimings({ largestContentfulPaint: largestContentfulPaint })
     }
   )
+  var stopLCPTracking = _trackLargestContentfulPaint.stop
   var _trackFirstInputTimings = trackFirstInputTimings(
     lifeCycle,
-    function (time) {
+    function (firttime) {
       setTimings({
-        firstInputDelay: time.firstInputDelay,
-        firstInputTime: time.firstInputTime
+        firstInputDelay: firttime.firstInputDelay,
+        firstInputTime: firttime.firstInputTime
       })
     }
   )
-
-  var stopNavigationTracking = _trackNavigationTimings.stop
-  var stopFCPTracking = _trackFirstContentfulPaint.stop
-  var stopLCPTracking = _trackLargestContentfulPaint.stop
   var stopFIDTracking = _trackFirstInputTimings.stop
+
   return {
     stop: function () {
       stopNavigationTracking()
@@ -61,10 +58,8 @@ export function trackNavigationTimings(lifeCycle, callback) {
           domComplete: entry.domComplete,
           domContentLoaded: entry.domContentLoadedEventEnd,
           domInteractive: entry.domInteractive,
-          loadEventEnd: entry.loadEventEnd,
-          loadEventStart: entry.loadEventStart,
-          domContentLoadedEventEnd: entry.domContentLoadedEventEnd,
-          domContentLoadedEventStart: entry.domContentLoadedEventStart
+          loadEvent: entry.loadEventEnd,
+          loadEventEnd: entry.loadEventEnd
         })
       }
     }
@@ -91,7 +86,7 @@ export function trackFirstContentfulPaint(lifeCycle, callback) {
 }
 
 /**
- * Track the largest contentful paint (LCP) occuring during the initial View.  This can yield
+ * Track the largest contentful paint (LCP) occurring during the initial View.  This can yield
  * multiple values, only the most recent one should be used.
  * Documentation: https://web.dev/lcp/
  * Reference implementation: https://github.com/GoogleChrome/web-vitals/blob/master/src/getLCP.ts
@@ -103,7 +98,7 @@ export function trackLargestContentfulPaint(lifeCycle, emitter, callback) {
   // browser should not send largest-contentful-paint entries after a user interact with the page,
   // but the web-vitals reference implementation uses this as a safeguard.
   var firstInteractionTimestamp = Infinity
-  var listeners = addEventListeners(
+  var _addEventListeners = addEventListeners(
     emitter,
     [DOM_EVENT.POINTER_DOWN, DOM_EVENT.KEY_DOWN],
     function (event) {
@@ -111,7 +106,7 @@ export function trackLargestContentfulPaint(lifeCycle, emitter, callback) {
     },
     { capture: true, once: true }
   )
-
+  var stopEventListener = _addEventListeners.stop
   var subscribe = lifeCycle.subscribe(
     LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
     function (entry) {
@@ -124,12 +119,12 @@ export function trackLargestContentfulPaint(lifeCycle, emitter, callback) {
       }
     }
   )
+  var unsubscribeLifeCycle = subscribe.unsubscribe
 
   return {
     stop: function () {
-      listeners.stop()
-      listeners.stop()
-      subscribe.unsubscribe()
+      stopEventListener()
+      unsubscribeLifeCycle()
     }
   }
 }
@@ -144,7 +139,6 @@ export function trackLargestContentfulPaint(lifeCycle, emitter, callback) {
  */
 export function trackFirstInputTimings(lifeCycle, callback) {
   var firstHidden = trackFirstHidden()
-
   var subscribe = lifeCycle.subscribe(
     LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
     function (entry) {
@@ -162,7 +156,6 @@ export function trackFirstInputTimings(lifeCycle, callback) {
       }
     }
   )
-
   return {
     stop: subscribe.unsubscribe
   }

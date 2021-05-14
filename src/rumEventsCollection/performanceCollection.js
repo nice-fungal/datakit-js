@@ -42,7 +42,7 @@ export function startPerformanceCollection(lifeCycle, configuration) {
       'longtask',
       'paint',
       'largest-contentful-paint',
-      // 'first-input',
+      'first-input',
       'layout-shift'
     ]
 
@@ -60,11 +60,11 @@ export function startPerformanceCollection(lifeCycle, configuration) {
       handleRumPerformanceEntry(lifeCycle, configuration, timing)
     })
   }
-  // if (!supportPerformanceTimingEvent('first-input')) {
-  //   retrieveFirstInputTiming((timing) => {
-  //     handleRumPerformanceEntry(lifeCycle, configuration, timing)
-  //   })
-  // }
+  if (!supportPerformanceTimingEvent('first-input')) {
+    retrieveFirstInputTiming((timing) => {
+      handleRumPerformanceEntry(lifeCycle, configuration, timing)
+    })
+  }
 }
 
 export function retrieveInitialDocumentResourceTiming(callback) {
@@ -224,7 +224,7 @@ function handlePerformanceEntries(lifeCycle, configuration, entries) {
       entry.entryType === 'paint' ||
       entry.entryType === 'longtask' ||
       entry.entryType === 'largest-contentful-paint' ||
-      // entry.entryType === 'first-input' ||
+      entry.entryType === 'first-input' ||
       entry.entryType === 'layout-shift'
     ) {
       handleRumPerformanceEntry(lifeCycle, configuration, entry)

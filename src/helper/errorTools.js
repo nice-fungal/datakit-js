@@ -4,7 +4,8 @@ export var ErrorSource = {
   CONSOLE: 'console',
   NETWORK: 'network',
   SOURCE: 'source',
-  LOGGER: 'logger'
+  LOGGER: 'logger',
+  CUSTOM: 'custom'
 }
 export function formatUnknownError(stackTrace, errorObject, nonErrorPrefix) {
   if (
@@ -37,4 +38,7 @@ export function toStackTraceString(stack) {
     result += '\n  at ' + func + args + ' @ ' + frame.url + line + column
   })
   return result
+}
+export function formatErrorMessage(stack) {
+  return (stack.name || 'Error') + ': ' + stack.message
 }

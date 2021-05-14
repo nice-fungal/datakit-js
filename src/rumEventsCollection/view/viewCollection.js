@@ -1,4 +1,11 @@
-import { getTimestamp, msToNs, extend2Lev } from '../../helper/tools'
+import {
+  isEmptyObject,
+  msToNs,
+  extend2Lev,
+  preferredTimeStamp,
+  toServerDuration,
+  mapValues
+} from '../../helper/tools'
 import { RumEventType } from '../../helper/enums'
 import { LifeCycleEventType } from '../../helper/lifeCycle'
 import { trackViews } from './trackViews'
@@ -6,7 +13,7 @@ import { toValidEntry } from '../resource/resourceUtils'
 export function startViewCollection(lifeCycle, configuration, location) {
   lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, function (view) {
     lifeCycle.notify(
-      LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED,
+      LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
       processViewUpdate(view)
     )
   })
@@ -23,7 +30,9 @@ function computePerformanceViewDetails(entry) {
     domInteractive = validEntry.domInteractive,
     domContentLoaded = validEntry.domContentLoaded,
     domComplete = validEntry.domComplete,
-    loadEventEnd = validEntry.loadEventEnd
+    loadEventEnd = validEntry.loadEventEnd,
+    loadEventStart = validEntry.loadEventStart,
+    domContentLoadedEventEnd = validEntry.domContentLoadedEventEnd
   var details = {
     fmp: msToNs(validEntry.largestContentfulPaint)
   }
@@ -42,8 +51,8 @@ function computePerformanceViewDetails(entry) {
   if (loadEventEnd !== fetchStart) {
     details.load = msToNs(loadEventEnd - fetchStart)
   }
-  if (loadEventEnd !== domContentLoaded) {
-    details.resourceLoadTime = msToNs(loadEventEnd - domContentLoaded)
+  if (loadEventStart !== domContentLoadedEventEnd) {
+    details.resourceLoadTime = msToNs(loadEventStart - domContentLoadedEventEnd)
   }
   if (domComplete !== domInteractive) {
     details.dom = msToNs(domComplete - domInteractive)
@@ -55,12 +64,12 @@ function processViewUpdate(view) {
     _dd: {
       documentVersion: view.documentVersion
     },
-    date: getTimestamp(view.startTime),
+    date: preferredTimeStamp(view.startClocks),
     type: RumEventType.VIEW,
-    page: {
-      // action: {
-      //   count: view.eventCounts.userActionCount
-      // },
+    view: {
+      action: {
+        count: view.eventCounts.userActionCount
+      },
       cumulativeLayoutShift: view.cumulativeLayoutShift,
       domComplete: msToNs(view.timings.domComplete),
       domContentLoaded: msToNs(view.timings.domContentLoaded),
@@ -69,24 +78,38 @@ function processViewUpdate(view) {
         count: view.eventCounts.errorCount
       },
       firstContentfulPaint: msToNs(view.timings.firstContentfulPaint),
-      // firstInputDelay: msToNs(view.timings.firstInputDelay),
+      firstInputDelay: msToNs(view.timings.firstInputDelay),
+      firstInputTime: msToNs(view.timings.firstInputTime),
+      largestContentfulPaint: msToNs(view.timings.largestContentfulPaint),
       loadEventEnd: msToNs(view.timings.loadEventEnd),
+      load_event: msToNs(view.timings.load_event),
       loadingTime: msToNs(view.loadingTime),
       loadingType: view.loadingType,
-      // longTask: {
-      //   count: view.eventCounts.longTaskCount
-      // },
-      // resource: {
-      //   count: view.eventCounts.resourceCount
-      // },
+      isActive: view.isActive,
+      name: view.name,
+      longTask: {
+        count: view.eventCounts.longTaskCount
+      },
+      resource: {
+        count: view.eventCounts.resourceCount
+      },
       timeSpent: msToNs(view.duration)
+    },
+    session: {
+      hasReplay: view.hasReplay || undefined
     }
   }
+  if (!isEmptyObject(view.customTimings)) {
+    viewEvent.view.custom_timings = mapValues(
+      view.customTimings,
+      toServerDuration
+    )
+  }
   viewEvent = extend2Lev(viewEvent, {
-    page: computePerformanceViewDetails(view.timings)
+    view: computePerformanceViewDetails(view.timings)
   })
   return {
     rawRumEvent: viewEvent,
-    startTime: view.startTime
+    startTime: view.startClocks.relative
   }
 }

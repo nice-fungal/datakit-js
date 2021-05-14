@@ -1,5 +1,5 @@
 import Observable from '../helper/observable'
-import { each } from '../helper/tools'
+import { each, preferredNow } from '../helper/tools'
 import { LifeCycleEventType } from '../helper/lifeCycle'
 
 // Delay to wait for a page activity to validate the tracking process
@@ -130,19 +130,19 @@ export function waitPageActivitiesCompletion(
   var hasCompleted = false
 
   var validationTimeoutId = setTimeout(function () {
-    complete(false, 0)
+    complete({ hadActivity: false })
   }, PAGE_ACTIVITY_VALIDATION_DELAY)
   var maxDurationTimeoutId = setTimeout(function () {
-    complete(true, performance.now())
+    complete({ hadActivity: true, endTime: preferredNow() })
   }, PAGE_ACTIVITY_MAX_DURATION)
   pageActivitiesObservable.subscribe(function (data) {
     var isBusy = data.isBusy
     clearTimeout(validationTimeoutId)
     clearTimeout(idleTimeoutId)
-    var lastChangeTime = performance.now()
+    var lastChangeTime = preferredNow()
     if (!isBusy) {
       idleTimeoutId = setTimeout(function () {
-        complete(true, lastChangeTime)
+        complete({ hadActivity: true, endTime: lastChangeTime })
       }, PAGE_ACTIVITY_END_DELAY)
     }
   })
@@ -155,12 +155,12 @@ export function waitPageActivitiesCompletion(
     stopPageActivitiesTracking()
   }
 
-  function complete(hadActivity, endTime) {
+  function complete(params) {
     if (hasCompleted) {
       return
     }
     stop()
-    completionCallback(hadActivity, endTime)
+    completionCallback(params)
   }
 
   return { stop: stop }

@@ -1,4 +1,11 @@
-import { ONE_MINUTE, each } from '../helper/tools'
+import {
+  ONE_MINUTE,
+  each,
+  relativeNow,
+  replaceNumberCharByPath,
+  getQueryParamsFromUrl,
+  jsonStringify
+} from '../helper/tools'
 import { SESSION_TIME_OUT_DELAY } from '../core/sessionManagement'
 import { LifeCycleEventType } from '../helper/lifeCycle'
 export var VIEW_CONTEXT_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
@@ -16,13 +23,6 @@ export function startParentContexts(lifeCycle, session) {
   lifeCycle.subscribe(
     LifeCycleEventType.VIEW_CREATED,
     function (currentContext) {
-      if (currentView) {
-        previousViews.unshift({
-          context: buildCurrentViewContext(),
-          endTime: currentContext.startTime,
-          startTime: currentView.startTime
-        })
-      }
       currentView = currentContext
       currentSessionId = session.getId()
     }
@@ -38,7 +38,16 @@ export function startParentContexts(lifeCycle, session) {
       }
     }
   )
-
+  lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, function (data) {
+    if (currentView) {
+      previousViews.unshift({
+        endTime: data.endClocks.relative,
+        context: buildCurrentViewContext(),
+        startTime: currentView.startClocks.relative
+      })
+      currentView = undefined
+    }
+  })
   lifeCycle.subscribe(
     LifeCycleEventType.AUTO_ACTION_CREATED,
     function (currentContext) {
@@ -47,13 +56,13 @@ export function startParentContexts(lifeCycle, session) {
   )
 
   lifeCycle.subscribe(
-    LifeCycleEventType.AUTO_ACTION_COMPvarED,
+    LifeCycleEventType.AUTO_ACTION_COMPLETED,
     function (action) {
       if (currentAction) {
         previousActions.unshift({
           context: buildCurrentActionContext(),
-          endTime: currentAction.startTime + action.duration,
-          startTime: currentAction.startTime
+          endTime: currentAction.startClocks.relative + action.duration,
+          startTime: currentAction.startClocks.relative
         })
       }
       currentAction = undefined
@@ -77,7 +86,7 @@ export function startParentContexts(lifeCycle, session) {
   }, CLEAR_OLD_CONTEXTS_INTERVAL)
 
   function clearOldContexts(previousContexts, timeOutDelay) {
-    var oldTimeThreshold = performance.now() - timeOutDelay
+    var oldTimeThreshold = relativeNow() - timeOutDelay
     while (
       previousContexts.length > 0 &&
       previousContexts[previousContexts.length - 1].startTime < oldTimeThreshold
@@ -88,13 +97,20 @@ export function startParentContexts(lifeCycle, session) {
 
   function buildCurrentViewContext() {
     return {
-      sessionId: currentSessionId,
-      page: {
+      session: {
+        id: currentSessionId
+      },
+      view: {
         id: currentView.id,
         referrer: currentView.referrer,
+        name: currentView.name,
         url: currentView.location.href,
         host: currentView.location.host,
-        path: currentView.location.pathname
+        path: currentView.location.pathname,
+        pathGroup: replaceNumberCharByPath(currentView.location.pathname),
+        urlQuery: jsonStringify(
+          getQueryParamsFromUrl(currentView.location.href)
+        )
       }
     }
   }
@@ -112,7 +128,7 @@ export function startParentContexts(lifeCycle, session) {
     if (startTime === undefined) {
       return currentContext ? buildContext() : undefined
     }
-    if (currentContext && startTime >= currentContext.startTime) {
+    if (currentContext && startTime >= currentContext.startClocks.relative) {
       return buildContext()
     }
     var flag = undefined
@@ -137,17 +153,7 @@ export function startParentContexts(lifeCycle, session) {
         startTime
       )
     },
-    findActionV2: function (startTime) {
-      var actionContext = parentContexts.findAction(startTime)
-      if (!actionContext) {
-        return
-      }
-      return {
-        action: {
-          id: actionContext.userAction.id
-        }
-      }
-    },
+
     findView: function (startTime) {
       return findContext(
         buildCurrentViewContext,
@@ -156,18 +162,7 @@ export function startParentContexts(lifeCycle, session) {
         startTime
       )
     },
-    findViewV2: function (startTime) {
-      var viewContext = parentContexts.findView(startTime)
-      if (!viewContext) {
-        return
-      }
-      return {
-        session: {
-          id: viewContext.sessionId
-        },
-        page: viewContext.page
-      }
-    },
+
     stop: function () {
       window.clearInterval(clearOldContextsInterval)
     }

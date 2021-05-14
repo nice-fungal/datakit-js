@@ -47,14 +47,6 @@ export function trackXhr(lifeCycle, configuration, tracer) {
   xhrProxy.onRequestComplete(function (context, xhr) {
     if (isAllowedRequestUrl(configuration, context.url)) {
       tracer.clearTracingIfCancelled(context)
-      var headers = xhr.getAllResponseHeaders()
-      var contentTypes = matchResponseHeaderByName(headers, 'content-type')
-      contentTypes =
-        contentTypes &&
-        contentTypes.split(';').length > 0 &&
-        contentTypes.split(';')
-      var connection = matchResponseHeaderByName(headers, 'connection'),
-        server = matchResponseHeaderByName(headers, 'server')
 
       lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
         duration: context.duration,
@@ -62,13 +54,7 @@ export function trackXhr(lifeCycle, configuration, tracer) {
         requestIndex: context.requestIndex,
         response: context.response,
         traceId: context.traceId,
-        responseConnection: connection,
-        responseServer: server,
-        responseHeader: headers.replace(/[\n\r]/g, ' '),
-        responseContentType: (contentTypes && contentTypes[0]) || '',
-        responseContentEncoding: matchContentEncoding(
-          contentTypes && contentTypes[1]
-        ),
+        startClocks: context.startClocks,
         spanId: context.spanId,
         startTime: context.startTime,
         status: context.status,
@@ -105,22 +91,15 @@ export function trackFetch(lifeCycle, configuration, tracer) {
   fetchProxy.onRequestComplete(function (context) {
     if (isAllowedRequestUrl(configuration, context.url)) {
       tracer.clearTracingIfCancelled(context)
-      var headers = getAllFetchResponseHeaders(context.headers)
-      var connection = matchResponseHeaderByName(headers, 'connection'),
-        server = matchResponseHeaderByName(headers, 'server')
+
       lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
         duration: context.duration,
         method: context.method,
         requestIndex: context.requestIndex,
         response: context.response,
         responseType: context.responseType,
-        responseHeader: headers.replace(/[\n\r]/g, ' '),
-        responseConnection: connection,
-        responseServer: server,
-        responseContentType: matchResponseHeaderByName(headers, 'content-type'),
-        responseContentEncoding: matchContentEncoding(
-          matchResponseHeaderByName(headers, 'content-encode')
-        ),
+        startClocks: context.startClocks,
+
         spanId: context.spanId,
         startTime: context.startTime,
         status: context.status,

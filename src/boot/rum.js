@@ -3,27 +3,48 @@ import { commonInit } from '../core/configuration'
 import { buildEnv } from './buildEnv'
 import { LifeCycle } from '../helper/lifeCycle'
 import { startPerformanceCollection } from '../rumEventsCollection/performanceCollection'
+import { startDOMMutationCollection } from '../rumEventsCollection/domMutationCollection'
+import { startLongTaskCollection } from '../rumEventsCollection/longTask/longTaskCollection'
+import { startActionCollection } from '../rumEventsCollection/actions/actionCollection'
 import { startParentContexts } from '../rumEventsCollection/parentContexts'
 import { startRumBatch } from '../rumEventsCollection/transport/batch'
 import { startRumAssembly } from '../rumEventsCollection/assembly'
+import { startInternalContext } from '../rumEventsCollection/internalContext'
 import { startErrorCollection } from '../rumEventsCollection/error/errorCollection'
 import { startViewCollection } from '../rumEventsCollection/view/viewCollection'
 import { startRequestCollection } from '../rumEventsCollection/requestCollections'
 import { startResourceCollection } from '../rumEventsCollection/resource/resourceCollection'
-export function startRum(userConfiguration, getGlobalContext) {
+export function startRum(userConfiguration, getCommonContext) {
   var lifeCycle = new LifeCycle()
   var configuration = commonInit(userConfiguration, buildEnv)
   var session = startRumSession(configuration, lifeCycle)
-  startRumEventCollection(
+  var _startRumEventCollection = startRumEventCollection(
     userConfiguration.applicationId,
     location,
     lifeCycle,
     configuration,
     session,
-    getGlobalContext
+    getCommonContext
   )
-  startPerformanceCollection(lifeCycle, configuration)
+  var parentContexts = _startRumEventCollection.parentContexts
   startRequestCollection(lifeCycle, configuration)
+  startPerformanceCollection(lifeCycle, configuration)
+  startDOMMutationCollection(lifeCycle)
+  var internalContext = startInternalContext(
+    userConfiguration.applicationId,
+    session,
+    parentContexts
+  )
+  return {
+    addAction: _startRumEventCollection.addAction,
+    addError: _startRumEventCollection.addError,
+    addTiming: _startRumEventCollection.addTiming,
+    configuration: configuration,
+    lifeCycle: lifeCycle,
+    parentContexts: parentContexts,
+    session: session,
+    getInternalContext: internalContext.get
+  }
 }
 
 export function startRumEventCollection(
@@ -32,7 +53,7 @@ export function startRumEventCollection(
   lifeCycle,
   configuration,
   session,
-  getGlobalContext
+  getCommonContext
 ) {
   var parentContexts = startParentContexts(lifeCycle, session)
   var batch = startRumBatch(configuration, lifeCycle)
@@ -42,13 +63,26 @@ export function startRumEventCollection(
     lifeCycle,
     session,
     parentContexts,
-    getGlobalContext
+    getCommonContext
   )
+  startLongTaskCollection(lifeCycle)
   startResourceCollection(lifeCycle, configuration, session)
-  startViewCollection(lifeCycle, configuration, location)
-  startErrorCollection(lifeCycle, configuration)
+  var _startViewCollection = startViewCollection(
+    lifeCycle,
+    configuration,
+    location
+  )
+  var addTiming = _startViewCollection.addTiming
+  var stopViewCollection = _startViewCollection.stop
+  var _startErrorCollection = startErrorCollection(lifeCycle, configuration)
+  var _startActionCollection = startActionCollection(lifeCycle, configuration)
   return {
+    addAction: _startActionCollection.addAction,
+    addTiming: addTiming,
+    parentContexts: parentContexts,
+    addError: _startErrorCollection.addError,
     stop: function () {
+      stopViewCollection()
       batch.stop()
     }
   }

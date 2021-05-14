@@ -8,6 +8,24 @@ export function makeGlobal(stub) {
   })
   return global
 }
+export function makePublicApi(stub) {
+  var publicApi = extend({}, stub, {
+    onReady: function (callback) {
+      callback()
+    }
+  })
+
+  // Add an "hidden" property to set debug mode. We define it that way to hide it
+  // as much as possible but of course it's not a real protection.
+  Object.defineProperty(publicApi, '_setDebug', {
+    get: function () {
+      return setDebugMode
+    },
+    enumerable: false
+  })
+
+  return publicApi
+}
 export function defineGlobal(global, name, api) {
   var existingGlobalVariable = global[name]
   global[name] = api

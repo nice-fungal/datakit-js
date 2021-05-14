@@ -1,15 +1,37 @@
-import { toArray, each, jsonStringify, ONE_MINUTE } from '../helper/tools'
+import {
+  toArray,
+  each,
+  jsonStringify,
+  find,
+  ONE_MINUTE,
+  clocksNow,
+  map,
+  extend
+} from '../helper/tools'
 import {
   ErrorSource,
   formatUnknownError,
-  toStackTraceString
+  toStackTraceString,
+  formatErrorMessage
 } from '../helper/errorTools'
-import { computeStackTrace, report } from '../helper/tracekit'
+import { computeStackTrace, subscribe, unsubscribe } from '../helper/tracekit'
 import Observable from '../helper/observable'
 import { isIntakeRequest } from './configuration'
 import { RequestType } from '../helper/enums'
 import { resetXhrProxy, startXhrProxy } from './xhrProxy'
 import { resetFetchProxy, startFetchProxy } from './fetchProxy'
+
+var errorObservable
+
+export function startAutomaticErrorCollection(configuration) {
+  if (!errorObservable) {
+    errorObservable = new Observable()
+    trackNetworkError(configuration, errorObservable)
+    startConsoleTracking(errorObservable)
+    startRuntimeErrorTracking(errorObservable)
+  }
+  return errorObservable
+}
 
 var originalConsoleError
 
@@ -17,18 +39,28 @@ export function startConsoleTracking(errorObservable) {
   originalConsoleError = console.error
   console.error = function () {
     originalConsoleError.apply(console, arguments)
-    var args = toArray(arguments)
+    errorObservable.notify(
+      extend({}, buildErrorFromParams(toArray(arguments)), {
+        source: ErrorSource.CONSOLE,
+        startClocks: clocksNow()
+      })
+    )
+  }
+}
 
-    var message = []
-    each(['console error:'].concat(args), function (para) {
-      message.push(formatConsoleParameters(para))
-    })
-
-    errorObservable.notify({
-      message: message.join(' '),
-      source: ErrorSource.CONSOLE,
-      startTime: performance.now()
-    })
+function buildErrorFromParams(params) {
+  var firstErrorParam = find(params, function (param) {
+    return param instanceof Error
+  })
+  var message = ''
+  message = map(['console error:'].concat(params), function (param) {
+    return formatConsoleParameters(param)
+  }).join(' ')
+  return {
+    message: message,
+    stack: firstErrorParam
+      ? toStackTraceString(computeStackTrace(firstErrorParam))
+      : undefined
   }
 }
 
@@ -41,33 +73,11 @@ function formatConsoleParameters(param) {
     return param
   }
   if (param instanceof Error) {
-    return toStackTraceString(computeStackTrace(param))
+    return formatErrorMessage(computeStackTrace(param))
   }
   return jsonStringify(param, undefined, 2)
 }
-export function filterErrors(configuration, errorObservable) {
-  var errorCount = 0
-  var filteredErrorObservable = new Observable()
-  errorObservable.subscribe(function (error) {
-    if (errorCount < configuration.maxErrorsByMinute) {
-      errorCount += 1
-      filteredErrorObservable.notify(error)
-    } else if (errorCount === configuration.maxErrorsByMinute) {
-      errorCount += 1
-      filteredErrorObservable.notify({
-        message:
-          'Reached max number of errors by minute: ' +
-          configuration.maxErrorsByMinute,
-        source: ErrorSource.AGENT,
-        startTime: performance.now()
-      })
-    }
-  })
-  setInterval(function () {
-    errorCount = 0
-  }, ONE_MINUTE)
-  return filteredErrorObservable
-}
+
 var traceKitReportHandler
 
 export function startRuntimeErrorTracking(errorObservable) {
@@ -78,31 +88,20 @@ export function startRuntimeErrorTracking(errorObservable) {
       stack: error.stack,
       type: error.type,
       source: ErrorSource.SOURCE,
-      startTime: performance.now()
+      startClocks: clocksNow()
     })
   }
-  report.subscribe(traceKitReportHandler)
+
+  subscribe(traceKitReportHandler)
 }
 
 export function stopRuntimeErrorTracking() {
-  report.unsubscribe(traceKitReportHandler)
-}
-var filteredErrorsObservable
-
-export function startAutomaticErrorCollection(configuration) {
-  if (!filteredErrorsObservable) {
-    var errorObservable = new Observable()
-    trackNetworkError(configuration, errorObservable)
-    startConsoleTracking(errorObservable)
-    startRuntimeErrorTracking(errorObservable)
-    filteredErrorsObservable = filterErrors(configuration, errorObservable)
-  }
-  return filteredErrorsObservable
+  unsubscribe(traceKitReportHandler)
 }
 
 export function trackNetworkError(configuration, errorObservable) {
   startXhrProxy().onRequestComplete(function (context) {
-    return handleCompleteRequest(RequestType.XHR, context)
+    handleCompleteRequest(RequestType.XHR, context)
   })
   startFetchProxy().onRequestComplete(function (context) {
     handleCompleteRequest(RequestType.FETCH, context)
@@ -111,10 +110,12 @@ export function trackNetworkError(configuration, errorObservable) {
   function handleCompleteRequest(type, request) {
     if (
       !isIntakeRequest(request.url, configuration) &&
+      (!configuration.isEnabled('remove-network-errors') ||
+        !request.isAborted) &&
       (isRejected(request) || isServerError(request))
     ) {
       errorObservable.notify({
-        message: format(type) + 'error' + request.method + ' ' + request.url,
+        message: format(type) + ' error ' + request.method + ' ' + request.url,
         resource: {
           method: request.method,
           statusCode: request.status,
@@ -123,18 +124,19 @@ export function trackNetworkError(configuration, errorObservable) {
         source: ErrorSource.NETWORK,
         stack:
           truncateResponse(request.response, configuration) || 'Failed to load',
-        startTime: request.startTime
+        startClocks: request.startClocks
       })
     }
   }
 
   return {
-    stop: function () {
+    stop: () => {
       resetXhrProxy()
       resetFetchProxy()
     }
   }
 }
+
 function isRejected(request) {
   return request.status === 0 && request.responseType !== 'opaque'
 }

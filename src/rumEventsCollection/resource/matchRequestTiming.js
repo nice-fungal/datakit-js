@@ -28,7 +28,14 @@ export function matchRequestTiming(request) {
   })
   candidates = filter(candidates, toValidEntry)
   candidates = filter(candidates, function (entry) {
-    return isBetween(entry, request.startTime, endTime(request))
+    return isBetween(
+      entry,
+      request.startClocks.relative,
+      endTime({
+        startTime: request.startClocks.relative,
+        duration: request.duration
+      })
+    )
   })
 
   if (candidates.length === 1) {
@@ -51,5 +58,10 @@ function endTime(timing) {
 }
 
 function isBetween(timing, start, end) {
-  return timing.startTime >= start && endTime(timing) <= end
+  // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+  var errorMargin = 1
+  return (
+    timing.startTime >= start - errorMargin &&
+    endTime(timing) <= end + errorMargin
+  )
 }
