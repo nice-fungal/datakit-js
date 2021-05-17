@@ -7,7 +7,10 @@ import {
   Observable,
   limitModification,
   Batch,
-  HttpRequest
+  HttpRequest,
+  urlParse,
+  getStatusGroup,
+  replaceNumberCharByPath
 } from '@cloudcare/browser-core'
 import { StatusType } from '../domain/logger'
 import { startLoggerSession } from '../domain/loggerSession'

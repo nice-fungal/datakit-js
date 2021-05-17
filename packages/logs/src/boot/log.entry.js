@@ -11,6 +11,7 @@ import {
   getGlobalObject
 } from '@cloudcare/browser-core'
 import { startLogs } from './log'
+import { Logger } from '../domain/logger'
 
 export var datafluxLogs = makeLogsPublicApi(startLogs)
 

@@ -28,7 +28,7 @@ export const HandlerType = {
   silent: 'silent'
 }
 // eslint-disable-next-line @typescript-eslint/no-redeclare
-function Logger(sendLog, handlerType, level, loggerContext) {
+export function Logger(sendLog, handlerType, level, loggerContext) {
   this.contextManager = createContextManager()
   this.sendLog = sendLog
   this.handlerType = handlerType
