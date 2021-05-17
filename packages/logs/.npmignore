@@ -1,0 +1,5 @@
+*
+!/bundle/dataflux-logs.js
+!/cjs/**/*
+!/esm/**/*
+!/src/**/*

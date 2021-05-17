@@ -1,0 +1,5 @@
+*
+!/bundle/dataflux-rum.js
+!/cjs/**/*
+!/esm/**/*
+!/src/**/*

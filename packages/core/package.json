@@ -1,0 +1,24 @@
+{
+  "name": "@cloudcare/browser-core",
+  "version": "1.0.0",
+  "main": "cjs/index.js",
+  "module": "esm/index.js",
+  "scripts": {
+    "build": "run-p build:cjs build:esm",
+    "build:cjs": "rm -rf cjs && babel --config-file ./babel.cjs.json --out-dir cjs ./src",
+    "build:esm": "rm -rf esm && babel --config-file ./babel.esm.json --out-dir esm ./src "
+  },
+  "keywords": [
+    "dataflux",
+    "logs",
+    "sdk"
+  ],
+  "repository": {
+    "url": "https://github.com/CloudCare/dataflux-rum-sdk-javascript",
+    "type": "git"
+  },
+  "author": "dataflux",
+  "license": "MIT",
+  "homepage": "https://github.com/CloudCare/dataflux-rum-sdk-javascript/blob/master/packages/rum/README.md",
+  "description": "DataFlux RUM Web 端数据指标监控"
+}
