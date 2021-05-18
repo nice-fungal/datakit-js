@@ -138,8 +138,7 @@ export var dataMap = {
       status: 'status'
     },
     fields: {
-      message: ['string', 'message'],
-      message_context: ['string', 'message_context']
+      message: ['string', 'message']
     }
   }
 }

@@ -182,7 +182,38 @@ window.DATAFLUX_LOGS && DATAFLUX_LOGS.logger.info('Button clicked', { name: 'but
     }
 }
 ```
+##  Status 参数
+初始化SDk后，可以使用提供`log` API,定义不同类型的状态
+```js
+log (message: string, messageContext: Context, status? = 'debug' | 'info' | 'warn' | 'error' | 'critical')
+```
 
+### NPM
+```js
+import { datafluxLogs } from '@datadog/browser-logs'
 
+datafluxLogs.logger.log(<MESSAGE>,<JSON_ATTRIBUTES>,<STATUS>);
+
+```
+
+### CDN 异步
+```js
+DATAFLUX_LOGS.onReady(function () {
+  DATAFLUX_LOGS.logger.log(<MESSAGE>,<JSON_ATTRIBUTES>,<STATUS>);
+})
+```
+
+### CDN 同步
+```js
+window.DATAFLUX_LOGS && DATAFLUX_LOGS.logger.log(<MESSAGE>,<JSON_ATTRIBUTES>,<STATUS>);
+```
+
+## 参数说明
+
+| 参数                 | 描述                                                             |
+| -------------------- | ---------------------------------------------------------------- |
+| `<MESSAGE>`          | Dataflux 日志中的 message 字段                                   |
+| `<JSON_ATTRIBUTES>	` | 描述message的额外数据，是一个json对象                            |
+| `<STATUS>	`          | 日志的等级，可选值：`debug`, `info`, `warn`, `error`, `critical` |
 
 

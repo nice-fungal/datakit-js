@@ -7,9 +7,11 @@ import {
   isNumber,
   isArray,
   extend,
-  isString
+  isString,
+  keys,
+  isBoolean
 } from './helper/tools'
-import { DOM_EVENT } from './helper/enums'
+import { DOM_EVENT, RumEventType } from './helper/enums'
 import { commonTags, dataMap } from './dataMap'
 // https://en.wikipedia.org/wiki/UTF-8
 var HAS_MULTI_BYTES_CHARACTERS = /[^\u0000-\u007F]/
@@ -90,8 +92,10 @@ batch.prototype = {
         rowStr += key + ','
         var tagsStr = []
         var tags = extend({}, commonTags, value.tags)
+        var filterFileds = ['date'] // 已经在datamap中定义过的fields和tags
         each(tags, function (value_path, _key) {
           var _value = findByPath(message, value_path)
+          filterFileds.push(value_path)
           if (_value || isNumber(_value)) {
             tagsStr.push(escapeRowData(_key) + '=' + escapeRowData(_value))
           }
@@ -99,6 +103,7 @@ batch.prototype = {
         if (message.tags.length) {
           // 自定义tag
           each(message.tags, function (_value, _key) {
+            filterFileds.push(_key)
             if (_value || isNumber(_value)) {
               tagsStr.push(escapeRowData(_key) + '=' + escapeRowData(_value))
             }
@@ -110,6 +115,7 @@ batch.prototype = {
             var type = _value[0],
               value_path = _value[1]
             var _valueData = findByPath(message, value_path)
+            filterFileds.push(value_path)
             if (_valueData || isNumber(_valueData)) {
               _valueData =
                 type === 'string'
@@ -121,12 +127,25 @@ batch.prototype = {
             }
           } else if (isString(_value)) {
             var _valueData = findByPath(message, _value)
+            filterFileds.push(_value)
             if (_valueData || isNumber(_valueData)) {
               _valueData = escapeRowData(_valueData)
               fieldsStr.push(escapeRowData(_key) + '=' + _valueData)
             }
           }
         })
+        if (message.type === RumEventType.LOGGER) {
+          // 这里处理日志类型数据自定义字段
+          each(message, function (value, key) {
+            if (
+              (filterFileds.indexOf(key) === -1 && isNumber(value)) ||
+              isString(value) ||
+              isBoolean(value)
+            ) {
+              tagsStr.push(escapeRowData(key) + '=' + escapeRowData(value))
+            }
+          })
+        }
         if (tagsStr.length) {
           rowStr += tagsStr.join(',')
         }
