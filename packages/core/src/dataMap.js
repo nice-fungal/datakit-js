@@ -30,7 +30,7 @@ export var dataMap = {
   view: {
     type: RumEventType.VIEW,
     tags: {
-      loading_type: 'view.loading_type',
+      view_loading_type: 'view.loading_type',
       view_apdex_level: 'view.apdex_level',
       is_active: 'view.is_active'
     },
@@ -38,6 +38,7 @@ export var dataMap = {
       view_error_count: 'view.error.count',
       view_resource_count: 'view.resource.count',
       view_long_task_count: 'view.long_task.count',
+      view_action_count: 'view.action.count',
       first_contentful_paint: 'view.first_contentful_paint',
       largest_contentful_paint: 'view.largest_contentful_paint',
       cumulative_layout_shift: 'view.cumulative_layout_shift',
@@ -54,7 +55,7 @@ export var dataMap = {
       time_to_interactive: 'view.tti',
       dom: 'view.dom',
       dom_ready: 'view.dom_ready',
-      time_spent: 'view.time_spent'
+      duration: 'view.time_spent'
     }
   },
   resource: {
