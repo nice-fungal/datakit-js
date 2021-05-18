@@ -119,5 +119,26 @@ export var dataMap = {
     fields: {
       duration: 'action.loading_time'
     }
+  },
+  browser_log: {
+    type: RumEventType.LOGGER,
+    tags: {
+      error_source: 'error.source',
+      error_type: 'error.type',
+      error_resource_url: 'resource.url',
+      error_resource_url_host: 'resource.url_host',
+      error_resource_url_path: 'resource.url_path',
+      error_resource_url_path_group: 'resource.url_path_group',
+      error_resource_status: 'resource.status',
+      error_resource_status_group: 'resource.status_group',
+      error_resource_method: 'resource.method',
+      action_id: 'user_action.id',
+      service: 'service',
+      status: 'status'
+    },
+    fields: {
+      message: ['string', 'message'],
+      message_context: ['string', 'message_context']
+    }
   }
 }

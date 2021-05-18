@@ -2,7 +2,8 @@ import {
   createContextManager,
   extend,
   keys,
-  ErrorSource
+  ErrorSource,
+  jsonStringify
 } from '@cloudcare/browser-core'
 // import { ErrorSource } from '../../../helper/errorTools'
 export var StatusType = {
@@ -30,6 +31,15 @@ export const HandlerType = {
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export function Logger(sendLog, handlerType, level, loggerContext) {
   this.contextManager = createContextManager()
+  if (typeof handlerType === 'undefined') {
+    handlerType = HandlerType.http
+  }
+  if (typeof level === 'undefined') {
+    level = StatusType.debug
+  }
+  if (typeof loggerContext === 'undefined') {
+    loggerContext = {}
+  }
   this.sendLog = sendLog
   this.handlerType = handlerType
   this.level = level
@@ -45,8 +55,8 @@ Logger.prototype = {
         case HandlerType.http:
           var logMessage = extend(
             { message: message, status: status },
-            this.contextManager.get(),
-            messageContext
+            { tags: this.contextManager.get() },
+            { messageContext: jsonStringify(messageContext) }
           )
           this.sendLog(logMessage)
           break

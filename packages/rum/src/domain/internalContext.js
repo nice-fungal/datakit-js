@@ -9,9 +9,13 @@ export function startInternalContext(applicationId, session, parentContexts) {
       if (session.isTracked() && viewContext && viewContext.session.id) {
         const actionContext = parentContexts.findAction(startTime)
         return {
-          application_id: applicationId,
-          session_id: viewContext.session.id,
-          user_action: actionContext
+          application: {
+            id: applicationId
+          },
+          session: {
+            id: viewContext.session.id
+          },
+          userAction: actionContext
             ? {
                 id: actionContext.action.id
               }

@@ -10,25 +10,22 @@ import {
   HttpRequest,
   urlParse,
   getStatusGroup,
-  replaceNumberCharByPath
+  deviceInfo,
+  RumEventType,
+  replaceNumberCharByPath,
+  withSnakeCaseKeys,
+  extend2Lev
 } from '@cloudcare/browser-core'
 import { StatusType } from '../domain/logger'
 import { startLoggerSession } from '../domain/loggerSession'
 import { buildEnv } from './buildEnv'
-// import { startAutomaticErrorCollection } from '../../../core/errorCollection'
-// import Observable from '../../../helper/observable'
-// import { limitModification } from '../../../helper/limitModification'
-// import { Batch, HttpRequest } from '../../../core/transport'
-// import { createErrorFilter } from '../../../helper/errorFilter'
-// import { commonInit } from '../../../core/configuration'
-// import { areCookiesAuthorized } from '../../../core/cookie'
 
 var FIELDS_WITH_SENSITIVE_DATA = [
   'view.url',
   'view.referrer',
   'message',
   'error.stack',
-  'http.url'
+  'source.url'
 ]
 
 export function startLogs(userConfiguration, errorLogger, getGlobalContext) {
@@ -76,7 +73,7 @@ export function doStartLogs(
     }
     errorLogger.error(
       error.message,
-      extend(
+      extend2Lev(
         {
           date: error.startClocks.timeStamp,
           error: {
@@ -86,9 +83,8 @@ export function doStartLogs(
           }
         },
         {
-          http: resource
+          resource: resource
         },
-
         getRUMInternalContext(error.startClocks.relative)
       )
     )
@@ -129,8 +125,24 @@ export function buildAssemble(session, configuration, reportError) {
     if (!session.isTracked()) {
       return undefined
     }
-    var contextualizedMessage = extend(
-      { service: configuration.service, session_id: session.getId() },
+    var contextualizedMessage = extend2Lev(
+      {
+        service: configuration.service || 'browser',
+        session: {
+          id: session.getId()
+        },
+        type: RumEventType.LOGGER,
+        _dd: {
+          sdkName: configuration.sdkName,
+          sdkVersion: configuration.sdkVersion,
+          env: configuration.env,
+          version: configuration.version
+        },
+        device: deviceInfo,
+        user: {
+          user_id: configuration.user_id
+        }
+      },
       currentContext,
       getRUMInternalContext(),
       message
@@ -151,7 +163,7 @@ export function buildAssemble(session, configuration, reportError) {
     ) {
       return undefined
     }
-    return contextualizedMessage
+    return withSnakeCaseKeys(contextualizedMessage)
   }
 }
 
@@ -165,7 +177,7 @@ export function assembleMessageContexts(
 }
 
 function getRUMInternalContext(startTime) {
-  var rum = window.DD_RUM
+  var rum = window.DATAFLUX_RUM
   return rum && rum.getInternalContext
     ? rum.getInternalContext(startTime)
     : undefined

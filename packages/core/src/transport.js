@@ -127,7 +127,6 @@ batch.prototype = {
             }
           }
         })
-        console.log(tagsStr, fieldsStr, 'tagsStr, fileStr====')
         if (tagsStr.length) {
           rowStr += tagsStr.join(',')
         }
@@ -183,6 +182,10 @@ batch.prototype = {
     }
   },
   process: function (message) {
+    var processedMessage = ''
+    if (message.type === 'logger') {
+      console.log(message, 'messages====')
+    }
     var processedMessage = this.processSendData(message)
     var messageBytesSize = this.sizeInBytes(processedMessage)
     return {

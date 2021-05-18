@@ -37,7 +37,8 @@ export var RumEventType = {
   ERROR: 'error',
   LONG_TASK: 'long_task',
   VIEW: 'view',
-  RESOURCE: 'resource'
+  RESOURCE: 'resource',
+  LOGGER: 'logger'
 }
 
 export var RequestType = {
