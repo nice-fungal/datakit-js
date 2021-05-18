@@ -8,7 +8,8 @@ import {
   BoundedBuffer,
   makePublicApi,
   defineGlobal,
-  getGlobalObject
+  getGlobalObject,
+  extend2Lev
 } from '@cloudcare/browser-core'
 import { startLogs } from './log'
 import { Logger } from '../domain/logger'
@@ -99,7 +100,7 @@ export function makeLogsPublicApi(startLogsImpl) {
   function sendLog(message) {
     sendLogStrategy(
       message,
-      extend(
+      extend2Lev(
         {
           date: Date.now(),
           view: {

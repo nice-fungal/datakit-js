@@ -1,16 +1,16 @@
 import {
   createContextManager,
-  extend,
+  extend2Lev,
   keys,
   ErrorSource,
   jsonStringify
 } from '@cloudcare/browser-core'
-// import { ErrorSource } from '../../../helper/errorTools'
 export var StatusType = {
   debug: 'debug',
+  critical: 'critical',
   error: 'error',
   info: 'info',
-  warn: 'warn'
+  warn: 'warning'
 }
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 
@@ -18,7 +18,8 @@ var STATUS_PRIORITIES = {
   [StatusType.debug]: 0,
   [StatusType.info]: 1,
   [StatusType.warn]: 2,
-  [StatusType.error]: 3
+  [StatusType.error]: 3,
+  [StatusType.critical]: 4
 }
 
 export const STATUSES = keys(StatusType)
@@ -53,17 +54,17 @@ Logger.prototype = {
     if (STATUS_PRIORITIES[status] >= STATUS_PRIORITIES[this.level]) {
       switch (this.handlerType) {
         case HandlerType.http:
-          var logMessage = extend(
+          var logMessage = extend2Lev(
             { message: message, status: status },
             { tags: this.contextManager.get() },
-            { messageContext: jsonStringify(messageContext) }
+            messageContext
           )
           this.sendLog(logMessage)
           break
         case HandlerType.console:
           console.log(
             status + ' : ' + message,
-            extend(this.contextManager.get(), messageContext)
+            extend2Lev(this.contextManager.get(), messageContext)
           )
           break
         case HandlerType.silent:
@@ -82,14 +83,16 @@ Logger.prototype = {
   warn: function (message, messageContext) {
     this.log(message, messageContext, StatusType.warn)
   },
-
+  critical: function (message, messageContext) {
+    this.log(message, messageContext, StatusType.critical)
+  },
   error: function (message, messageContext) {
     var errorOrigin = {
       error: {
         origin: ErrorSource.LOGGER
       }
     }
-    this.log(message, extend(errorOrigin, messageContext), StatusType.error)
+    this.log(message, extend2Lev(errorOrigin, messageContext), StatusType.error)
   },
 
   setContext: function (context) {
