@@ -22,6 +22,7 @@
     "build": "lerna run build --stream",
     "build:bundle": "lerna run build:bundle --stream",
     "publish:npm": "npm run build && lerna publish from-package",
+    "publish:oss": "lerna run publish:oss --stream",
     "dev": "node scripts/dev-server.js",
     "release": "lerna version --exact"
   },

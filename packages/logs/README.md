@@ -74,7 +74,7 @@ datafluxLogs.init({
 
 ```html
 <script
-  src="https://static.dataflux.cn/browser-sdk/v2/dataflux-rum.js" 
+  src="https://static.dataflux.cn/browser-sdk/v1/dataflux-logs.js" 
   type="text/javascript"
 ></script>
 <script>
