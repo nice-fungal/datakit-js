@@ -55,7 +55,7 @@ export var dataMap = {
       time_to_interactive: 'view.tti',
       dom: 'view.dom',
       dom_ready: 'view.dom_ready',
-      duration: 'view.time_spent'
+      time_spent: 'view.time_spent'
     }
   },
   resource: {
