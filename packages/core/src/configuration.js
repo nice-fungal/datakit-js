@@ -73,9 +73,9 @@ export function commonInit(userConfiguration, buildEnv) {
     isEnabled: (feature) => includes(enableExperimentalFeatures, feature),
     cookieOptions: buildCookieOptions(userConfiguration)
   }
-  if ('allowedTracingOrigins' in userConfiguration) {
-    transportConfiguration.allowedTracingOrigins =
-      userConfiguration.allowedTracingOrigins
+  if ('allowedDDTracingOrigins' in userConfiguration) {
+    transportConfiguration.allowedDDTracingOrigins =
+      userConfiguration.allowedDDTracingOrigins
   }
 
   if ('sampleRate' in userConfiguration) {
