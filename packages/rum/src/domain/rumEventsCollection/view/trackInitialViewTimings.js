@@ -63,7 +63,10 @@ export function trackNavigationTimings(lifeCycle, callback) {
           domContentLoaded: entry.domContentLoadedEventEnd,
           domInteractive: entry.domInteractive,
           loadEvent: entry.loadEventEnd,
-          loadEventEnd: entry.loadEventEnd
+          loadEventEnd: entry.loadEventEnd,
+          loadEventStart: entry.loadEventStart,
+          domContentLoadedEventEnd: entry.domContentLoadedEventEnd,
+          domContentLoadedEventStart: entry.domContentLoadedEventStart
         })
       }
     }
