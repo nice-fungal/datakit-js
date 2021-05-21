@@ -1,4 +1,4 @@
-import { each, relativeNow, clocksNow } from './helper/tools'
+import { each, relativeNow, clocksNow, elapsed } from './helper/tools'
 import { computeStackTrace } from './tracekit'
 import { toStackTraceString } from './helper/errorTools'
 import { normalizeUrl } from './helper/urlPolyfill'
