@@ -70,15 +70,21 @@ export function makeRumPublicApi(startRumImpl) {
       var addErrorStrategy = _startRumImpl.addError
       var addTimingStrategy = _startRumImpl.addTiming
       getInternalContextStrategy = _startRumImpl.getInternalContext
-      beforeInitAddAction.drain(([action, commonContext]) =>
+      beforeInitAddAction.drain(function (data) {
+        var action = data[0]
+        var commonContext = data[1]
         addActionStrategy(action, commonContext)
-      )
-      beforeInitAddError.drain(([error, commonContext]) =>
+      })
+      beforeInitAddError.drain(function (data) {
+        var error = data[0]
+        var commonContext = data[1]
         addErrorStrategy(error, commonContext)
-      )
-      beforeInitAddTiming.drain(([name, endClocks]) =>
+      })
+      beforeInitAddTiming.drain(function (data) {
+        var name = data[0]
+        var endClocks = data[1]
         addTimingStrategy(name, endClocks)
-      )
+      })
 
       isAlreadyInitialized = true
     },

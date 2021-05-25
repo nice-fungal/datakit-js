@@ -49,6 +49,7 @@ export var processedMessageByDataMap = function (message) {
   each(dataMap, function (value, key) {
     if (value.type === message.type) {
       rowStr += key + ','
+      rowData.measurement = key
       var tagsStr = []
       var tags = extend({}, commonTags, value.tags)
       var filterFileds = ['date', 'type'] // 已经在datamap中定义过的fields和tags
