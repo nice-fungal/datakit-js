@@ -98,7 +98,6 @@ export var dataMap = {
       resource_method: 'error.resource.method'
     },
     fields: {
-      error_starttime: 'error.starttime',
       error_message: ['string', 'error.message'],
       error_stack: ['string', 'error.stack']
     }

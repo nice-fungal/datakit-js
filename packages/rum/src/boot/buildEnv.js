@@ -1,4 +1,4 @@
 export var buildEnv = {
   sdkVersion: '<<< SDK_VERSION >>>',
-  sdkName: 'Web SDK'
+  sdkName: 'df_web_rum_sdk'
 }
