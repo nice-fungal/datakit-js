@@ -576,7 +576,7 @@ var MethodLibrary = {
     } else if (
       match['Chrome'] &&
       _this.engine == 'WebKit' &&
-      parseInt(version['Chrome']()) > 27
+      parseInt(_this.browserVersion) > 27
     ) {
       _this.engine = 'Blink'
     } else if (_this.browser == 'Opera' && parseInt(_this.version) > 12) {
