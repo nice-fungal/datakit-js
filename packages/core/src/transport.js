@@ -9,6 +9,7 @@ import {
   extend,
   isString,
   keys,
+  toServerDuration,
   isBoolean
 } from './helper/tools'
 import { DOM_EVENT, RumEventType } from './helper/enums'
@@ -40,7 +41,91 @@ httpRequest.prototype = {
 }
 
 export var HttpRequest = httpRequest
+export var processedMessageByDataMap = function (message) {
+  if (!message || !message.type) return ''
+  var rowData = { tags: {}, fields: {} }
+  var hasFileds = false
+  var rowStr = ''
+  each(dataMap, function (value, key) {
+    if (value.type === message.type) {
+      rowStr += key + ','
+      var tagsStr = []
+      var tags = extend({}, commonTags, value.tags)
+      var filterFileds = ['date', 'type'] // 已经在datamap中定义过的fields和tags
+      each(tags, function (value_path, _key) {
+        var _value = findByPath(message, value_path)
+        filterFileds.push(value_path)
+        if (_value || isNumber(_value)) {
+          rowData.tags[_key] = _value
+          tagsStr.push(escapeRowData(_key) + '=' + escapeRowData(_value))
+        }
+      })
+      if (message.tags.length) {
+        // 自定义tag
+        each(message.tags, function (_value, _key) {
+          filterFileds.push(_key)
+          if (_value || isNumber(_value)) {
+            rowData.tags[_key] = _value
+            tagsStr.push(escapeRowData(_key) + '=' + escapeRowData(_value))
+          }
+        })
+      }
+      var fieldsStr = []
+      each(value.fields, function (_value, _key) {
+        if (isArray(_value) && _value.length === 2) {
+          var type = _value[0],
+            value_path = _value[1]
+          var _valueData = findByPath(message, value_path)
+          filterFileds.push(value_path)
+          if (_valueData || isNumber(_valueData)) {
+            rowData.fields[_key] = _valueData // 这里不需要转译
+            _valueData =
+              type === 'string'
+                ? '"' +
+                  _valueData.replace(/[\\]*"/g, '"').replace(/"/g, '\\"') +
+                  '"'
+                : escapeRowData(_valueData)
+            fieldsStr.push(escapeRowData(_key) + '=' + _valueData)
+          }
+        } else if (isString(_value)) {
+          var _valueData = findByPath(message, _value)
+          filterFileds.push(_value)
+          if (_valueData || isNumber(_valueData)) {
+            rowData.fields[_key] = _valueData // 这里不需要转译
+            _valueData = escapeRowData(_valueData)
+            fieldsStr.push(escapeRowData(_key) + '=' + _valueData)
+          }
+        }
+      })
+      if (message.type === RumEventType.LOGGER) {
+        // 这里处理日志类型数据自定义字段
 
+        each(message, function (value, key) {
+          if (
+            filterFileds.indexOf(key) === -1 &&
+            (isNumber(value) || isString(value) || isBoolean(value))
+          ) {
+            tagsStr.push(escapeRowData(key) + '=' + escapeRowData(value))
+          }
+        })
+      }
+      if (tagsStr.length) {
+        rowStr += tagsStr.join(',')
+      }
+      if (fieldsStr.length) {
+        rowStr += ' '
+        rowStr += fieldsStr.join(',')
+        hasFileds = true
+      }
+      rowStr = rowStr + ' ' + message.date
+      rowData.time = toServerDuration(message.date) // 这里不需要转译
+    }
+  })
+  return {
+    rowStr: hasFileds ? rowStr : '',
+    rowData: hasFileds ? rowData : undefined
+  }
+}
 function batch(
   request,
   maxSize,
@@ -83,90 +168,7 @@ batch.prototype = {
   },
 
   processSendData: function (message) {
-    // var data = safeJSONParse(message)
-    if (!message || !message.type) return ''
-    var rowsStr = []
-    each(dataMap, function (value, key) {
-      if (value.type === message.type) {
-        var rowStr = ''
-        rowStr += key + ','
-        var tagsStr = []
-        var tags = extend({}, commonTags, value.tags)
-        var filterFileds = ['date', 'type'] // 已经在datamap中定义过的fields和tags
-        each(tags, function (value_path, _key) {
-          var _value = findByPath(message, value_path)
-          filterFileds.push(value_path)
-          if (_value || isNumber(_value)) {
-            tagsStr.push(escapeRowData(_key) + '=' + escapeRowData(_value))
-          }
-        })
-        if (message.tags.length) {
-          // 自定义tag
-          each(message.tags, function (_value, _key) {
-            filterFileds.push(_key)
-            if (_value || isNumber(_value)) {
-              tagsStr.push(escapeRowData(_key) + '=' + escapeRowData(_value))
-            }
-          })
-        }
-        var fieldsStr = []
-        each(value.fields, function (_value, _key) {
-          if (isArray(_value) && _value.length === 2) {
-            var type = _value[0],
-              value_path = _value[1]
-            var _valueData = findByPath(message, value_path)
-            filterFileds.push(value_path)
-            if (_valueData || isNumber(_valueData)) {
-              _valueData =
-                type === 'string'
-                  ? '"' +
-                    _valueData.replace(/[\\]*"/g, '"').replace(/"/g, '\\"') +
-                    '"'
-                  : escapeRowData(_valueData)
-              fieldsStr.push(escapeRowData(_key) + '=' + _valueData)
-            }
-          } else if (isString(_value)) {
-            var _valueData = findByPath(message, _value)
-            filterFileds.push(_value)
-            if (_valueData || isNumber(_valueData)) {
-              _valueData = escapeRowData(_valueData)
-              fieldsStr.push(escapeRowData(_key) + '=' + _valueData)
-            }
-          }
-        })
-        if (message.type === RumEventType.LOGGER) {
-          // 这里处理日志类型数据自定义字段
-          console.log(
-            filterFileds,
-            'filterFiledsfilterFiledsfilterFiledsfilterFileds'
-          )
-          each(message, function (value, key) {
-            if (
-              filterFileds.indexOf(key) === -1 &&
-              (isNumber(value) || isString(value) || isBoolean(value))
-            ) {
-              tagsStr.push(escapeRowData(key) + '=' + escapeRowData(value))
-            }
-          })
-        }
-        if (tagsStr.length) {
-          rowStr += tagsStr.join(',')
-        }
-        if (fieldsStr.length) {
-          rowStr += ' '
-          rowStr += fieldsStr.join(',')
-        }
-        rowStr = rowStr + ' ' + message.date
-        if (fieldsStr.length) {
-          rowsStr.push(rowStr)
-        }
-      }
-    })
-    if (rowsStr.length) {
-      return rowsStr.join('\n')
-    } else {
-      return ''
-    }
+    return processedMessageByDataMap(message).rowStr
   },
   sizeInBytes: function (candidate) {
     // Accurate byte size computations can degrade performances when there is a lot of events to process
@@ -205,9 +207,7 @@ batch.prototype = {
   },
   process: function (message) {
     var processedMessage = ''
-    if (message.type === 'logger') {
-      console.log(message, 'messages====')
-    }
+
     var processedMessage = this.processSendData(message)
     var messageBytesSize = this.sizeInBytes(processedMessage)
     return {
