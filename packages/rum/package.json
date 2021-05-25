@@ -4,7 +4,7 @@
   "main": "cjs/index.js",
   "module": "esm/index.js",
   "dependencies": {
-    "@cloudcare/browser-core": "1.0.3"
+    "@cloudcare/browser-core": "1.0.4"
   },
   "scripts": {
     "dev": "webpack serve --open --mode=development",
@@ -13,7 +13,8 @@
     "build:esm": "rm -rf esm && babel --config-file ./babel.esm.json --out-dir esm ./src && npm run replace-build-env esm",
     "build:bundle": "rm -rf bundle && webpack --config webpack.config.js --mode=production && npm run replace-build-env bundle ",
     "replace-build-env": "node scripts/replace-build-env.js",
-    "publish:oss": "npm run build && node ./scripts/publish-oss.js"
+    "publish:oss": "npm run build && node ./scripts/publish-oss.js",
+    "publish:oss:test": "npm run build && node ./scripts/publish-oss.js test"
   },
   "keywords": [
     "dataflux",

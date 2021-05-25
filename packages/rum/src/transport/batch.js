@@ -2,18 +2,33 @@ import {
   LifeCycleEventType,
   HttpRequest,
   Batch,
-  RumEventType
+  RumEventType,
+  jsBirdge,
+  processedMessageByDataMap
 } from '@cloudcare/browser-core'
 export function startRumBatch(configuration, lifeCycle) {
   var batch = makeRumBatch(configuration, lifeCycle)
   lifeCycle.subscribe(
     LifeCycleEventType.RUM_EVENT_COLLECTED,
     function (serverRumEvent) {
-      if (serverRumEvent.type === RumEventType.VIEW) {
-        batch.upsert(serverRumEvent, serverRumEvent.view.id)
-      } else {
-        batch.add(serverRumEvent)
-      }
+      // 处理webview 情况
+      jsBirdge.initBridge(function (res) {
+        if (res.isMobile) {
+          var rowData = processedMessageByDataMap(serverRumEvent).rowData
+          if (rowData) {
+            jsBirdge.sendEvent({
+              name: 'rum',
+              data: rowData
+            })
+          }
+        } else {
+          if (serverRumEvent.type === RumEventType.VIEW) {
+            batch.upsert(serverRumEvent, serverRumEvent.view.id)
+          } else {
+            batch.add(serverRumEvent)
+          }
+        }
+      })
     }
   )
   return {
