@@ -117,7 +117,10 @@ export var dataMap = {
       action_type: 'action.type'
     },
     fields: {
-      duration: 'action.loading_time'
+      duration: 'action.loading_time',
+      action_error_count: 'action.error.count',
+      action_resource_count: 'action.resource.count',
+      action_long_task_count: 'action.long_task.count'
     }
   },
   browser_log: {

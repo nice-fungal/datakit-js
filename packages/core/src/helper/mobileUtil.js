@@ -9,24 +9,29 @@ export var isIos = function () {
 var JsBirdge = function () {
   this.bridge = window['WebViewJavascriptBridge']
   this.tagMaps = {}
+  this.isValid = false
   window.mapWebViewCallBack = {}
 }
 JsBirdge.prototype = {
   initBridge: function (callback) {
+    var _this = this
     if (isIos()) {
-      if (this.bridge) {
+      if (_this.bridge) {
         callback({ isMobile: true })
+        _this.isValid = true
         return
       } else {
-        this.bridge = window['WVJBCallbacks']
-        if (this.bridge) {
+        _this.bridge = window['WVJBCallbacks']
+        if (_this.bridge) {
           callback({ isMobile: true })
+          _this.isValid = true
           return
         } else {
           window.WVJBCallbacks = [
             function (bridge) {
-              this.bridge = bridge
+              _this.bridge = bridge
               callback({ isMobile: true })
+              _this.isValid = true
               return
             }
           ]
@@ -40,17 +45,20 @@ JsBirdge.prototype = {
         }
       }
     } else if (isAndroid()) {
-      if (this.bridge) {
+      if (_this.bridge) {
         callback({ isMobile: true })
+        _this.isValid = true
         return
       } else {
         window.document.addEventListener(
           'WebViewJavascriptBridgeReady',
           function () {
-            this.bridge = window['WebViewJavascriptBridge']
-            if (this.bridge) {
+            _this.bridge = window['WebViewJavascriptBridge']
+            if (_this.bridge) {
+              _this.isValid = true
               return callback({ isMobile: true })
             } else {
+              _this.isValid = true
               return callback({ isMobile: false })
             }
           },
@@ -58,6 +66,7 @@ JsBirdge.prototype = {
         )
       }
     } else {
+      _this.isValid = true
       return callback({ isMobile: false })
     }
   },
@@ -65,34 +74,34 @@ JsBirdge.prototype = {
     if (typeof params === 'undefined') {
       params = {}
     }
-    this.initBridge(function (res) {
-      var tag = 'Unique id:' + new Date().getTime()
-      if (params.name) {
-        this.tagMaps[params.name] = tag
-        window.mapWebViewCallBack[tag] = function (ret, err) {
-          return Promise.resolve(ret, err)
-        }
-        params['_tag'] = tag
-        if (res.isMobile) {
-          if (isIos()) {
-            this.bridge.callHandler(
-              'sendEvent',
-              JSON.stringify(params),
-              'mapWebViewCallBack'
-            )
-          } else {
-            this.bridge.sendEvent(JSON.stringify(params), 'mapWebViewCallBack')
-          }
-        }
-      } else {
-        callback({ error: '请传入发送事件的名称！！' })
+    var _this = this
+    var tag = 'Unique id:' + new Date().getTime()
+    if (params.name) {
+      _this.tagMaps[params.name] = tag
+      window.mapWebViewCallBack[tag] = function (ret, err) {
+        return Promise.resolve(ret, err)
       }
-    })
+      params['_tag'] = tag
+      if (res.isMobile) {
+        if (isIos()) {
+          _this.bridge.callHandler(
+            'sendEvent',
+            JSON.stringify(params),
+            'mapWebViewCallBack'
+          )
+        } else {
+          _this.bridge.sendEvent(JSON.stringify(params), 'mapWebViewCallBack')
+        }
+      }
+    } else {
+      callback({ error: '请传入发送事件的名称！！' })
+    }
   },
   addEventListener: function (params, callback) {
     var tag = 'Unique id:' + new Date().getTime()
+    var _this = this
     if (params.name) {
-      this.tagMaps[params.name] = tag
+      _this.tagMaps[params.name] = tag
       window.mapWebViewCallBack[tag] = function (ret, err) {
         callback(ret, err)
         return
@@ -100,13 +109,13 @@ JsBirdge.prototype = {
       params['_tag'] = tag
       if (res.isMobile) {
         if (isIos()) {
-          this.bridge.callHandler(
+          _this.bridge.callHandler(
             'addEventListener',
             JSON.stringify(params),
             'mapWebViewCallBack'
           )
         } else {
-          this.bridge.addEventListener(
+          _this.bridge.addEventListener(
             JSON.stringify(params),
             'mapWebViewCallBack'
           )
