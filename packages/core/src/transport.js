@@ -141,14 +141,14 @@ function batch(
   this.maxMessageSize = maxMessageSize
   this.flushTimeout = flushTimeout
   this.beforeUnloadCallback = beforeUnloadCallback
+  this.pushOnlyBuffer = []
+  this.upsertBuffer = {}
+  this.bufferBytesSize = 0
+  this.bufferMessageCount = 0
   this.flushOnVisibilityHidden()
   this.flushPeriodically()
 }
 batch.prototype = {
-  pushOnlyBuffer: [],
-  upsertBuffer: {},
-  bufferBytesSize: 0,
-  bufferMessageCount: 0,
   add: function (message) {
     this.addOrUpdate(message)
   },

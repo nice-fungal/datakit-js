@@ -19,9 +19,10 @@ export var LifeCycleEventType = {
   RECORD_STOPPED: 'RECORD_STOPPED'
 }
 
-export function LifeCycle() {}
+export function LifeCycle() {
+  this.callbacks = []
+}
 LifeCycle.prototype = {
-  callbacks: [],
   notify: function (eventType, data) {
     var eventCallbacks = this.callbacks[eventType]
     if (eventCallbacks) {
