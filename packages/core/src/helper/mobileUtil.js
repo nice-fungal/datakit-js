@@ -82,16 +82,14 @@ JsBirdge.prototype = {
         return Promise.resolve(ret, err)
       }
       params['_tag'] = tag
-      if (res.isMobile) {
-        if (isIos()) {
-          _this.bridge.callHandler(
-            'sendEvent',
-            JSON.stringify(params),
-            'mapWebViewCallBack'
-          )
-        } else {
-          _this.bridge.sendEvent(JSON.stringify(params), 'mapWebViewCallBack')
-        }
+      if (isIos()) {
+        _this.bridge.callHandler(
+          'sendEvent',
+          JSON.stringify(params),
+          'mapWebViewCallBack'
+        )
+      } else {
+        _this.bridge.sendEvent(JSON.stringify(params), 'mapWebViewCallBack')
       }
     } else {
       callback({ error: '请传入发送事件的名称！！' })
@@ -107,19 +105,17 @@ JsBirdge.prototype = {
         return
       }
       params['_tag'] = tag
-      if (res.isMobile) {
-        if (isIos()) {
-          _this.bridge.callHandler(
-            'addEventListener',
-            JSON.stringify(params),
-            'mapWebViewCallBack'
-          )
-        } else {
-          _this.bridge.addEventListener(
-            JSON.stringify(params),
-            'mapWebViewCallBack'
-          )
-        }
+      if (isIos()) {
+        _this.bridge.callHandler(
+          'addEventListener',
+          JSON.stringify(params),
+          'mapWebViewCallBack'
+        )
+      } else {
+        _this.bridge.addEventListener(
+          JSON.stringify(params),
+          'mapWebViewCallBack'
+        )
       }
     } else {
       callback({ error: '请传入监听事件的名称！！' })
