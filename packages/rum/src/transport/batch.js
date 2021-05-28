@@ -15,7 +15,7 @@ var setBridgeData = function (serverRumEvent) {
     })
   }
 }
-var setBatchData = function (serverRumEvent) {
+var setBatchData = function (serverRumEvent, batch) {
   if (serverRumEvent.type === RumEventType.VIEW) {
     batch.upsert(serverRumEvent, serverRumEvent.view.id)
   } else {
@@ -33,13 +33,13 @@ export function startRumBatch(configuration, lifeCycle) {
         setBridgeData(serverRumEvent)
       } else {
         if (jsBirdge.isValid) {
-          setBatchData(serverRumEvent)
+          setBatchData(serverRumEvent, batch)
         } else {
           jsBirdge.initBridge(function (res) {
             if (res.isMobile) {
               setBridgeData(serverRumEvent)
             } else {
-              setBatchData(serverRumEvent)
+              setBatchData(serverRumEvent, batch)
             }
           })
         }
