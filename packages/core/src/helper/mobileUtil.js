@@ -7,7 +7,7 @@ export var isIos = function () {
 }
 
 var JsBirdge = function () {
-  this.bridge = window['WebViewJavascriptBridge']
+  this.bridge = window['FTWebViewJavascriptBridge']
   this.tagMaps = {}
   this.isValid = false
   window.mapWebViewCallBack = {}
@@ -51,9 +51,9 @@ JsBirdge.prototype = {
         return
       } else {
         window.document.addEventListener(
-          'WebViewJavascriptBridgeReady',
+          'FTWebViewJavascriptBridgeReady',
           function () {
-            _this.bridge = window['WebViewJavascriptBridge']
+            _this.bridge = window['FTWebViewJavascriptBridge']
             if (_this.bridge) {
               _this.isValid = true
               return callback({ isMobile: true })
