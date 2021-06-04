@@ -32,17 +32,7 @@ export function startRumBatch(configuration, lifeCycle) {
       if (jsBirdge.bridge) {
         setBridgeData(serverRumEvent)
       } else {
-        if (jsBirdge.isValid) {
-          setBatchData(serverRumEvent, batch)
-        } else {
-          jsBirdge.initBridge(function (res) {
-            if (res.isMobile) {
-              setBridgeData(serverRumEvent)
-            } else {
-              setBatchData(serverRumEvent, batch)
-            }
-          })
-        }
+        setBatchData(serverRumEvent, batch)
       }
     }
   )

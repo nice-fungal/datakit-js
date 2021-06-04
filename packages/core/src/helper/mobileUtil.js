@@ -9,29 +9,23 @@ export var isIos = function () {
 var JsBirdge = function () {
   this.bridge = window['FTWebViewJavascriptBridge']
   this.tagMaps = {}
-  this.isValid = false
   window.mapWebViewCallBack = {}
+  this.initBridge()
 }
 JsBirdge.prototype = {
-  initBridge: function (callback) {
+  initBridge: function () {
     var _this = this
     if (isIos()) {
-      if (_this.bridge) {
-        callback({ isMobile: true })
-        _this.isValid = true
-        return
-      } else {
-        _this.bridge = window['WVJBCallbacks']
-        if (_this.bridge) {
-          callback({ isMobile: true })
-          _this.isValid = true
+      if (!_this.bridge) {
+        if (window.WVJBCallbacks) {
+          window.WVJBCallbacks.push(function (bridge) {
+            _this.bridge = bridge
+          })
           return
         } else {
           window.WVJBCallbacks = [
             function (bridge) {
               _this.bridge = bridge
-              callback({ isMobile: true })
-              _this.isValid = true
               return
             }
           ]
@@ -44,30 +38,6 @@ JsBirdge.prototype = {
           }, 0)
         }
       }
-    } else if (isAndroid()) {
-      if (_this.bridge) {
-        callback({ isMobile: true })
-        _this.isValid = true
-        return
-      } else {
-        window.document.addEventListener(
-          'FTWebViewJavascriptBridgeReady',
-          function () {
-            _this.bridge = window['FTWebViewJavascriptBridge']
-            if (_this.bridge) {
-              _this.isValid = true
-              return callback({ isMobile: true })
-            } else {
-              _this.isValid = true
-              return callback({ isMobile: false })
-            }
-          },
-          false
-        )
-      }
-    } else {
-      _this.isValid = true
-      return callback({ isMobile: false })
     }
   },
   sendEvent: function (params, callback) {
