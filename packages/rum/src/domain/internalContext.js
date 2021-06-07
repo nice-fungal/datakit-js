@@ -17,7 +17,7 @@ export function startInternalContext(applicationId, session, parentContexts) {
           },
           userAction: actionContext
             ? {
-                id: actionContext.action.id
+                id: actionContext.userAction.id
               }
             : undefined,
           view: viewContext.view
