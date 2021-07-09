@@ -108,7 +108,7 @@ logger.debug | info | warn | error | critical (message: string, messageContext =
 ```
 ### NPM
 ```js
-import { datafluxLogs } from '@datadog/browser-logs'
+import { datafluxLogs } from '@cloudcare/browser-logs'
 
 datafluxLogs.logger.info('Button clicked', { name: 'buttonName', id: 123 })
 ```
@@ -190,7 +190,7 @@ log (message: string, messageContext: Context, status? = 'debug' | 'info' | 'war
 
 ### NPM
 ```js
-import { datafluxLogs } from '@datadog/browser-logs'
+import { datafluxLogs } from '@cloudcare/browser-logs'
 
 datafluxLogs.logger.log(<MESSAGE>,<JSON_ATTRIBUTES>,<STATUS>);
 

@@ -7,6 +7,7 @@ import {
 } from './helper/tools'
 import { getCurrentSite } from './cookie'
 import { haveSameOrigin } from './helper/urlPolyfill'
+var TRIM_REGIX = /^\s+|\s+$/g
 export var DEFAULT_CONFIGURATION = {
   resourceSampleRate: 100,
   sampleRate: 100,
@@ -33,6 +34,9 @@ export var DEFAULT_CONFIGURATION = {
   allowedDDTracingOrigins: [], //
   beforeSend: function (event) {}
 }
+function trim(str) {
+  return str.replace(TRIM_REGIX, '')
+}
 export function buildCookieOptions(userConfiguration) {
   var cookieOptions = {}
 
@@ -46,12 +50,12 @@ export function buildCookieOptions(userConfiguration) {
   return cookieOptions
 }
 function getDatakitUrl(url) {
-  if (url.lastIndexOf('/') === url.length - 1) return url + 'v1/write/rum'
-  return url + '/v1/write/rum'
+  if (url.lastIndexOf('/') === url.length - 1) return trim(url) + 'v1/write/rum'
+  return trim(url) + '/v1/write/rum'
 }
 function getLogsEndPoint(url) {
-  if (url.lastIndexOf('/') === url.length - 1) return url + 'v1/write/logging'
-  return url + '/v1/write/logging'
+  if (url.lastIndexOf('/') === url.length - 1) return trim(url) + 'v1/write/logging'
+  return trim(url) + '/v1/write/logging'
 }
 export function commonInit(userConfiguration, buildEnv) {
   var enableExperimentalFeatures = isArray(

@@ -20,8 +20,9 @@ import { datafluxRum } from '@cloudcare/browser-rum'
 datafluxRum.init({
   applicationId: '<DATAFLUX_APPLICATION_ID>',
   datakitOrigin: '<DATAKIT ORIGIN>'
-  //  env: 'production',
-  //  version: '1.0.0',
+  env: 'production',
+  version: '1.0.0',
+  trackInteractions: true,
 })
 ```
 
@@ -52,8 +53,9 @@ datafluxRum.init({
     DATAFLUX_RUM.init({
       applicationId: '<DATAFLUX_APPLICATION_ID>',
       datakitOrigin: '<DATAKIT ORIGIN>'
-      //  env: 'production',
-      //  version: '1.0.0',
+      env: 'production',
+      version: '1.0.0',
+      trackInteractions: true
     })
   })
 </script>
@@ -71,8 +73,9 @@ datafluxRum.init({
     window.DATAFLUX_RUM.init({
       applicationId: '<DATAFLUX_APPLICATION_ID>',
       datakitOrigin: '<DATAKIT ORIGIN>'
-      //  env: 'production',
-      //  version: '1.0.0',
+      env: 'production',
+      version: '1.0.0',
+      trackInteractions: true,
     })
 </script>
 ```
