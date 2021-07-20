@@ -28,7 +28,6 @@ export function startRumBatch(configuration, lifeCycle) {
     LifeCycleEventType.RUM_EVENT_COLLECTED,
     function (serverRumEvent) {
       // 处理webview 情况
-      console.log(serverRumEvent, 'serverRumEvent')
       if (jsBirdge.bridge) {
         setBridgeData(serverRumEvent)
       } else {

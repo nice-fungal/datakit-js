@@ -10,7 +10,9 @@ var JsBirdge = function () {
   this.bridge = window['FTWebViewJavascriptBridge']
   this.tagMaps = {}
   window.mapWebViewCallBack = {}
-  this.initBridge()
+  try {
+    this.initBridge()
+  } catch (err) {}
 }
 JsBirdge.prototype = {
   initBridge: function () {
@@ -52,15 +54,17 @@ JsBirdge.prototype = {
         return Promise.resolve(ret, err)
       }
       params['_tag'] = tag
-      if (isIos()) {
-        _this.bridge.callHandler(
-          'sendEvent',
-          JSON.stringify(params),
-          'mapWebViewCallBack'
-        )
-      } else {
-        _this.bridge.sendEvent(JSON.stringify(params), 'mapWebViewCallBack')
-      }
+      try {
+        if (isIos()) {
+          _this.bridge.callHandler(
+            'sendEvent',
+            JSON.stringify(params),
+            'mapWebViewCallBack'
+          )
+        } else {
+          _this.bridge.sendEvent(JSON.stringify(params), 'mapWebViewCallBack')
+        }
+      } catch (err) {}
     } else {
       callback({ error: '请传入发送事件的名称！！' })
     }
@@ -75,18 +79,20 @@ JsBirdge.prototype = {
         return
       }
       params['_tag'] = tag
-      if (isIos()) {
-        _this.bridge.callHandler(
-          'addEventListener',
-          JSON.stringify(params),
-          'mapWebViewCallBack'
-        )
-      } else {
-        _this.bridge.addEventListener(
-          JSON.stringify(params),
-          'mapWebViewCallBack'
-        )
-      }
+      try {
+        if (isIos()) {
+          _this.bridge.callHandler(
+            'addEventListener',
+            JSON.stringify(params),
+            'mapWebViewCallBack'
+          )
+        } else {
+          _this.bridge.addEventListener(
+            JSON.stringify(params),
+            'mapWebViewCallBack'
+          )
+        }
+      } catch (err) {}
     } else {
       callback({ error: '请传入监听事件的名称！！' })
     }
