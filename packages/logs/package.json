@@ -22,12 +22,11 @@
     "sdk"
   ],
   "repository": {
-    "url": "https://github.com/CloudCare/dataflux-rum-sdk-javascript",
+    "url": "https://github.com/DataFlux-cn/datakit-js",
     "type": "git"
   },
   "author": "dataflux",
   "license": "MIT",
-  "homepage": "https://github.com/CloudCare/dataflux-rum-sdk-javascript/blob/master/packages/rum/README.md",
   "description": "DataFlux RUM Web 端数据指标监控",
   "gitHead": "7fba94bb9f99679bb9acb7037e917170e5450038"
 }

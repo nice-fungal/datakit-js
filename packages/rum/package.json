@@ -22,7 +22,7 @@
     "sdk"
   ],
   "repository": {
-    "url": "https://github.com/CloudCare/dataflux-rum-sdk-javascript",
+    "url": "https://github.com/DataFlux-cn/datakit-js",
     "type": "git"
   },
   "author": "dataflux",
