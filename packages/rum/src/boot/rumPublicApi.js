@@ -8,6 +8,7 @@ import {
   isPercentage,
   clocksNow,
   extend2Lev,
+  timeStampNow,
   ActionType,
   ErrorSource
 } from '@cloudcare/browser-core'
@@ -21,7 +22,14 @@ export function makeRumPublicApi(startRumImpl) {
   var getInternalContextStrategy = function () {
     return undefined
   }
-
+  var getDebugSessionStrategy = function () {
+    return {}
+  }
+  var clearDebugSessionStrategy = function () {}
+  var beforeInitAddSession = new BoundedBuffer()
+  var addSessionStrategy = function (id) {
+    beforeInitAddSession.add([id, timeStampNow()])
+  }
   var beforeInitAddTiming = new BoundedBuffer()
   var addTimingStrategy = function (name) {
     beforeInitAddTiming.add([name, clocksNow()])
@@ -63,13 +71,23 @@ export function makeRumPublicApi(startRumImpl) {
       var _startRumImpl = startRumImpl(userConfiguration, function () {
         return {
           user: user,
-          context: globalContextManager.get
+          context: globalContextManager.get()
         }
       })
-      var addActionStrategy = _startRumImpl.addAction
-      var addErrorStrategy = _startRumImpl.addError
-      var addTimingStrategy = _startRumImpl.addTiming
+      addSessionStrategy = _startRumImpl.session.addDebugSession
+      addActionStrategy = _startRumImpl.addAction
+      addErrorStrategy = _startRumImpl.addError
+      addTimingStrategy = _startRumImpl.addTiming
+
+      getDebugSessionStrategy = _startRumImpl.session.getDebugSession
+      clearDebugSessionStrategy = _startRumImpl.session.clearDebugSession
+
       getInternalContextStrategy = _startRumImpl.getInternalContext
+      beforeInitAddSession.drain(function (data) {
+        var id = data[0]
+        var created_time = data[1]
+        addSessionStrategy(id, created_time)
+      })
       beforeInitAddAction.drain(function (data) {
         var action = data[0]
         var commonContext = data[1]
@@ -99,7 +117,15 @@ export function makeRumPublicApi(startRumImpl) {
     getInternalContext: function (startTime) {
       return getInternalContextStrategy(startTime)
     },
-
+    addDebugSession: function (id) {
+      addSessionStrategy(id)
+    },
+    clearDebugSession: function () {
+      clearDebugSessionStrategy()
+    },
+    getDebugSession: function () {
+      return getDebugSessionStrategy()
+    },
     addAction: function (name, context) {
       addActionStrategy({
         name: name,

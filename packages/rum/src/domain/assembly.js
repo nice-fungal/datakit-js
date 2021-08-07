@@ -68,8 +68,8 @@ export function startRumAssembly(
           device: {},
           date: timeStampNow(),
           user: {
-            user_id: configuration.user_id || session.getAnonymousID(),
-            is_signin: configuration.user_id ? 'T' : 'F'
+            id: session.getAnonymousID(),
+            is_signin: 'F'
           },
           session: {
             // must be computed on each event because synthetics instrumentation can be done after sdk execution
@@ -97,7 +97,13 @@ export function startRumAssembly(
         }
         if (!isEmptyObject(commonContext.user)) {
           // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-          serverRumEvent.usr = commonContext.user
+          serverRumEvent.user = extend2Lev(
+            {
+              id: session.getAnonymousID(),
+              is_signin: 'T'
+            },
+            commonContext.user
+          )
         }
 
         if (shouldSend(serverRumEvent, configuration.beforeSend, errorFilter)) {
@@ -107,7 +113,7 @@ export function startRumAssembly(
           // ) {
           //   console.log(serverRumEvent, '======serverRumEvent-====')
           // }
-          // console.log(serverRumEvent, '======serverRumEvent-====')
+          console.log(serverRumEvent, '======serverRumEvent-====')
           lifeCycle.notify(
             LifeCycleEventType.RUM_EVENT_COLLECTED,
             serverRumEvent

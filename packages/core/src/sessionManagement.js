@@ -38,7 +38,8 @@ export function startSessionManagement(
   var anonymousCookie = cacheAnonymousID(options)
   var sessionCookie = cacheCookieAccess(SESSION_COOKIE_NAME, options)
   var renewObservable = new Observable()
-  var currentSessionId = retrieveActiveSession(sessionCookie).id
+  var currentSession = retrieveActiveSession(sessionCookie)
+  var currentSessionId = currentSession.id
   var expandOrRenewSession = throttle(function () {
     var session = retrieveActiveSession(sessionCookie)
     var state = computeSessionState(session[productKey])
@@ -71,10 +72,37 @@ export function startSessionManagement(
       return anonymousCookie.get()
     },
     getId: function () {
-      return retrieveActiveSession(sessionCookie).id
+      // 先获取debug id
+      var session = retrieveActiveSession(sessionCookie)
+      return session.did || session.id
     },
     getTrackingType: function () {
       return retrieveActiveSession(sessionCookie)[productKey]
+    },
+    getDebugSession: function () {
+      var session = retrieveActiveSession(sessionCookie)
+      return {
+        id: session.did,
+        created: session.dcreated
+      }
+    },
+    addDebugSession: function (id, created) {
+      var session = retrieveActiveSession(sessionCookie)
+      if (!isEmptyObject(session)) {
+        session.did = id || UUID
+        session.dcreated = created || String(Date.now())
+        persistSession(session, sessionCookie)
+      }
+    },
+    clearDebugSession: function () {
+      var session = retrieveActiveSession(sessionCookie)
+      var newSession = {}
+      each(objectEntries(session), function (item) {
+        if (item[0] !== 'did' && item[0] !== 'dcreated') {
+          newSession[item[0]] = item[1]
+        }
+      })
+      persistSession(newSession, sessionCookie)
     },
     renewObservable: renewObservable
   }

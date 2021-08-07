@@ -5,7 +5,7 @@ export var commonTags = {
   app_id: 'application.id',
   env: '_dd.env',
   version: '_dd.version',
-  userid: 'user.user_id',
+  userid: 'user.id',
   session_id: 'session.id',
   session_type: 'session.type',
   is_signin: 'user.is_signin',

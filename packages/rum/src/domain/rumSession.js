@@ -25,6 +25,9 @@ export function startRumSession(configuration, lifeCycle) {
   return {
     getId: session.getId,
     getAnonymousID: session.getAnonymousID,
+    getDebugSession: session.getDebugSession,
+    addDebugSession: session.addDebugSession,
+    clearDebugSession: session.clearDebugSession,
     isTracked: function () {
       return (
         session.getId() !== undefined && isTracked(session.getTrackingType())
