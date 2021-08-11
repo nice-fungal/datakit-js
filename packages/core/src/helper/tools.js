@@ -1587,7 +1587,7 @@ export function toSnakeCase(word) {
 }
 
 export function escapeRowData(str) {
-  if (isObject(str)) {
+  if (typeof str === 'object' && str) {
      str = jsonStringify(str)
   } else if (!isString(str)) {
     return str
