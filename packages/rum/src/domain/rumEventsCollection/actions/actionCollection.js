@@ -27,7 +27,10 @@ export function startActionCollection(lifeCycle, configuration) {
     addAction: function (action, savedCommonContext) {
       lifeCycle.notify(
         LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-        extend({}, savedCommonContext, processAction(action))
+        extend(
+          { savedCommonContext: savedCommonContext },
+          processAction(action)
+        )
       )
     }
   }

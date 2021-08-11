@@ -81,6 +81,9 @@ export function startSessionManagement(
     },
     getDebugSession: function () {
       var session = retrieveActiveSession(sessionCookie)
+      if (isEmptyObject(session) || !session.did) {
+        return {}
+      }
       return {
         id: session.did,
         created: session.dcreated

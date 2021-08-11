@@ -58,7 +58,6 @@ export function startRumAssembly(
             env: configuration.env,
             version: configuration.version
           },
-          tags: configuration.tags,
           terminal: {
             type: 'web'
           },
@@ -90,7 +89,7 @@ export function startRumAssembly(
         var serverRumEvent = withSnakeCaseKeys(rumEvent)
         var context = extend2Lev(commonContext.context, customerContext)
         if (!isEmptyObject(context)) {
-          serverRumEvent.context = context
+          serverRumEvent.tags = context
         }
         if (!('has_replay' in serverRumEvent.session)) {
           serverRumEvent.session.has_replay = commonContext.hasReplay

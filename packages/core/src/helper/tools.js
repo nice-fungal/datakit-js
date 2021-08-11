@@ -1507,7 +1507,11 @@ export function createContextManager() {
     },
 
     add: function (key, value) {
-      context[key] = value
+      if (isString(key)) {
+        context[key] = value
+      } else {
+        console.error('key 需要传递字符串类型')
+      }
     },
 
     remove: function (key) {
@@ -1515,7 +1519,12 @@ export function createContextManager() {
     },
 
     set: function (newContext) {
-      context = newContext
+      if (isObject(newContext)) {
+        context = newContext
+      } else {
+        console.error('content 需要传递对象类型数据')
+      }
+      
     }
   }
 }
@@ -1578,7 +1587,11 @@ export function toSnakeCase(word) {
 }
 
 export function escapeRowData(str) {
-  if (!isString(str)) return str
+  if (isObject(str)) {
+     str = jsonStringify(str)
+  } else if (!isString(str)) {
+    return str
+  } 
   var reg = /[\s=,"]/g
   return String(str).replace(reg, function (word) {
     return '\\' + word

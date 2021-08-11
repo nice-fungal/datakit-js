@@ -6,6 +6,8 @@ export var commonTags = {
   env: '_dd.env',
   version: '_dd.version',
   userid: 'user.id',
+  user_email: 'user.email',
+  user_name: 'user.name',
   session_id: 'session.id',
   session_type: 'session.type',
   is_signin: 'user.is_signin',

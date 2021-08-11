@@ -10,7 +10,9 @@ import {
   extend2Lev,
   timeStampNow,
   ActionType,
-  ErrorSource
+  ErrorSource,
+  isEmptyObject,
+  formatDate
 } from '@cloudcare/browser-core'
 
 export function makeRumPublicApi(startRumImpl) {
@@ -119,55 +121,91 @@ export function makeRumPublicApi(startRumImpl) {
     },
     addDebugSession: function (id) {
       addSessionStrategy(id)
+      this.getDebugSession()
     },
     clearDebugSession: function () {
       clearDebugSessionStrategy()
+      console.log('%c应用已关闭调试模式!!!', 'font-size: 18px;color:yellow')
     },
     getDebugSession: function () {
-      return getDebugSessionStrategy()
+      var debugInfo = getDebugSessionStrategy()
+      if (isEmptyObject(debugInfo)) {
+        console.log(
+          '%c应用未开启调试模式!!!可以调用%caddDebugSession%c开启',
+          'font-size: 18px;color:yellow',
+          'font-size: 18px;color:red;font-weight: bold',
+          'font-size: 18px;color:yellow'
+        )
+        return debugInfo
+      } else {
+        const formatTime = formatDate(new Date(+debugInfo.created))
+        const did = debugInfo.id
+        console.log(
+          '%c应用已开启调试模式!!!调试信息如下:',
+          'font-size: 18px;color:yellow'
+        )
+        console.log(
+          '%c调试模式session id: %c' + did,
+          'font-size: 18px;color:yellow',
+          'font-size: 18px;color:red;font-weight: bold'
+        )
+        console.log(
+          '%c调试模式开始时间: %c' + formatTime,
+          'font-size: 18px;color:yellow',
+          'font-size: 18px;color:red;font-weight: bold'
+        )
+        console.log(
+          '%c可以调用%cclearDebugSession%c关闭调试模式',
+          'font-size: 18px;color:yellow',
+          'font-size: 18px;color:red;font-weight: bold',
+          'font-size: 18px;color:yellow'
+        )
+        return extend2Lev(debugInfo, {format_created: formatTime})
+      }
+      
     },
-    addAction: function (name, context) {
-      addActionStrategy({
-        name: name,
-        context: extend2Lev({}, context),
-        startClocks: clocksNow(),
-        type: ActionType.CUSTOM
-      })
-    },
+    // addAction: function (name, context) {
+    //   addActionStrategy({
+    //     name: name,
+    //     context: extend2Lev({}, context),
+    //     startClocks: clocksNow(),
+    //     type: ActionType.CUSTOM
+    //   })
+    // },
 
     /**
      * @deprecated use addAction instead
      */
-    addUserAction: function (name, context) {
-      rumPublicApi.addAction(name, context)
-    },
+    // addUserAction: function (name, context) {
+    //   rumPublicApi.addAction(name, context)
+    // },
 
-    addError: function (error, context, source) {
-      if (typeof source === 'undefined') {
-        source = ErrorSource.CUSTOM
-      }
-      var checkedSource
-      if (
-        source === ErrorSource.CUSTOM ||
-        source === ErrorSource.NETWORK ||
-        source === ErrorSource.SOURCE
-      ) {
-        checkedSource = source
-      } else {
-        console.error(`DD_RUM.addError: Invalid source '${source}'`)
-        checkedSource = ErrorSource.CUSTOM
-      }
-      addErrorStrategy({
-        error: error,
-        context: extend2Lev({}, context),
-        source: checkedSource,
-        startClocks: clocksNow()
-      })
-    },
+    // addError: function (error, context, source) {
+    //   if (typeof source === 'undefined') {
+    //     source = ErrorSource.CUSTOM
+    //   }
+    //   var checkedSource
+    //   if (
+    //     source === ErrorSource.CUSTOM ||
+    //     source === ErrorSource.NETWORK ||
+    //     source === ErrorSource.SOURCE
+    //   ) {
+    //     checkedSource = source
+    //   } else {
+    //     console.error(`DD_RUM.addError: Invalid source '${source}'`)
+    //     checkedSource = ErrorSource.CUSTOM
+    //   }
+    //   addErrorStrategy({
+    //     error: error,
+    //     context: extend2Lev({}, context),
+    //     source: checkedSource,
+    //     startClocks: clocksNow()
+    //   })
+    // },
 
-    addTiming: function (name) {
-      addTimingStrategy(name)
-    },
+    // addTiming: function (name) {
+    //   addTimingStrategy(name)
+    // },
 
     setUser: function (newUser) {
       var sanitizedUser = sanitizeUser(newUser)
@@ -176,6 +214,9 @@ export function makeRumPublicApi(startRumImpl) {
       } else {
         console.error('Unsupported user:', newUser)
       }
+    },
+    removeUser: function () {
+      user = {}
     }
   })
   return rumPublicApi

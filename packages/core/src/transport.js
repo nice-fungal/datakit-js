@@ -8,14 +8,16 @@ import {
   isArray,
   extend,
   isString,
-  keys,
   toServerDuration,
-  isBoolean
+  isBoolean,
+  isEmptyObject,
+  isObject
 } from './helper/tools'
 import { DOM_EVENT, RumEventType } from './helper/enums'
 import { commonTags, dataMap } from './dataMap'
 // https://en.wikipedia.org/wiki/UTF-8
 var HAS_MULTI_BYTES_CHARACTERS = /[^\u0000-\u007F]/
+var CUSTOM_KEYS = 'custom_keys'
 function addBatchPrecision(url) {
   if (!url) return url
   return url + (url.indexOf('?') === -1 ? '?' : '&') + 'precision=ms'
@@ -61,15 +63,23 @@ export var processedMessageByDataMap = function (message) {
           tagsStr.push(escapeRowData(_key) + '=' + escapeRowData(_value))
         }
       })
-      if (message.tags.length) {
+      if (message.tags && isObject(message.tags) && !isEmptyObject(message.tags)) {
         // 自定义tag
+        const _tagKeys = []
         each(message.tags, function (_value, _key) {
+          // 如果和之前tag重名，则舍弃
+          if (filterFileds.indexOf(_key) > -1) return
           filterFileds.push(_key)
           if (_value || isNumber(_value)) {
+            _tagKeys.push(_key)
             rowData.tags[_key] = _value
             tagsStr.push(escapeRowData(_key) + '=' + escapeRowData(_value))
           }
         })
+        if (_tagKeys.length) {
+          rowData.tags[CUSTOM_KEYS] = _tagKeys
+          tagsStr.push(escapeRowData(CUSTOM_KEYS) + '=' + escapeRowData(_tagKeys))
+        }
       }
       var fieldsStr = []
       each(value.fields, function (_value, _key) {

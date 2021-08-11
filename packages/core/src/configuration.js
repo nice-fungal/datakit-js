@@ -54,7 +54,8 @@ function getDatakitUrl(url) {
   return trim(url) + '/v1/write/rum'
 }
 function getLogsEndPoint(url) {
-  if (url.lastIndexOf('/') === url.length - 1) return trim(url) + 'v1/write/logging'
+  if (url.lastIndexOf('/') === url.length - 1)
+    return trim(url) + 'v1/write/logging'
   return trim(url) + '/v1/write/logging'
 }
 export function commonInit(userConfiguration, buildEnv) {
@@ -73,7 +74,6 @@ export function commonInit(userConfiguration, buildEnv) {
       userConfiguration.datakitUrl || userConfiguration.datakitOrigin
     ),
     logsEndpoint: getLogsEndPoint(userConfiguration.datakitOrigin),
-    tags: userConfiguration.tags || [],
     isEnabled: (feature) => includes(enableExperimentalFeatures, feature),
     cookieOptions: buildCookieOptions(userConfiguration)
   }

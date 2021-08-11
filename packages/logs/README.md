@@ -166,7 +166,6 @@ window.DATAFLUX_LOGS && DATAFLUX_LOGS.logger.info('Button clicked', { name: 'but
     },
     "message": "XHR error get http://testing-ft2x-api.cloudcare.cn/api/v1/workspace/xxx",
     "status": "error",
-    "tags": {},
     "error": {
         "source": "network",
         "stack": "Failed to load"
