@@ -57,7 +57,7 @@ export var processedMessageByDataMap = function (message) {
       var filterFileds = ['date', 'type'] // 已经在datamap中定义过的fields和tags
       each(tags, function (value_path, _key) {
         var _value = findByPath(message, value_path)
-        filterFileds.push(value_path)
+        filterFileds.push(_key)
         if (_value || isNumber(_value)) {
           rowData.tags[_key] = _value
           tagsStr.push(escapeRowData(_key) + '=' + escapeRowData(_value))
@@ -87,7 +87,7 @@ export var processedMessageByDataMap = function (message) {
           var type = _value[0],
             value_path = _value[1]
           var _valueData = findByPath(message, value_path)
-          filterFileds.push(value_path)
+          filterFileds.push(_key)
           if (_valueData || isNumber(_valueData)) {
             rowData.fields[_key] = _valueData // 这里不需要转译
             _valueData =
@@ -100,7 +100,7 @@ export var processedMessageByDataMap = function (message) {
           }
         } else if (isString(_value)) {
           var _valueData = findByPath(message, _value)
-          filterFileds.push(_value)
+          filterFileds.push(_key)
           if (_valueData || isNumber(_valueData)) {
             rowData.fields[_key] = _valueData // 这里不需要转译
             _valueData = escapeRowData(_valueData)
