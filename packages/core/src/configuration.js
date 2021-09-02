@@ -74,7 +74,7 @@ export function commonInit(userConfiguration, buildEnv) {
       userConfiguration.datakitUrl || userConfiguration.datakitOrigin
     ),
     logsEndpoint: getLogsEndPoint(userConfiguration.datakitOrigin),
-    isEnabled: (feature) => includes(enableExperimentalFeatures, feature),
+    isEnabled: function(feature) {return includes(enableExperimentalFeatures, feature)},
     cookieOptions: buildCookieOptions(userConfiguration)
   }
   if ('allowedDDTracingOrigins' in userConfiguration) {
