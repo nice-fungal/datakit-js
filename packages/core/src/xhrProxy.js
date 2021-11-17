@@ -71,6 +71,7 @@ function proxyXhr() {
 
       var hasBeenReported = false
       var reportXhr = function () {
+        _this.removeEventListener('loadend', reportXhr)
         if (hasBeenReported) {
           return
         }
