@@ -94,7 +94,7 @@ export function commonInit(userConfiguration, buildEnv) {
   if ('trackInteractions' in userConfiguration) {
     transportConfiguration.trackInteractions = !!userConfiguration.trackInteractions
   }
-  return extend2Lev(DEFAULT_CONFIGURATION, transportConfiguration)
+  return extend2Lev({}, DEFAULT_CONFIGURATION, transportConfiguration)
 }
 function mustUseSecureCookie(userConfiguration) {
   return (
