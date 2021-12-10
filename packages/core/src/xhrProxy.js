@@ -84,7 +84,6 @@ function proxyXhr() {
           response: _this.response,
           status: _this.status
         })
-
         each(onRequestCompleteCallbacks, function (callback) {
           callback(xhrCompleteContext, _this)
         })

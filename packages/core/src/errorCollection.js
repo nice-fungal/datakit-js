@@ -108,8 +108,7 @@ export function trackNetworkError(configuration, errorObservable) {
   function handleCompleteRequest(type, request) {
     if (
       !isIntakeRequest(request.url, configuration) &&
-      (!configuration.isEnabled('remove-network-errors') ||
-        !request.isAborted) &&
+      !request.isAborted &&
       (isRejected(request) || isServerError(request))
     ) {
       errorObservable.notify({

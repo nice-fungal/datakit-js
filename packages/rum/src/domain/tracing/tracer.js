@@ -89,7 +89,7 @@ function getCrypto() {
 function makeTracingHeaders(traceId, spanId) {
   return {
     'x-datadog-origin': 'rum',
-    'x-datadog-parent-id': spanId.toDecimalString(),
+    // 'x-datadog-parent-id': spanId.toDecimalString(),
     'x-datadog-sampled': '1',
     'x-datadog-sampling-priority': '1',
     'x-datadog-trace-id': traceId.toDecimalString()
