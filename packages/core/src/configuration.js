@@ -3,7 +3,9 @@ import {
   ONE_SECOND,
   extend2Lev,
   isArray,
-  includes
+  includes,
+  isFunction,
+  isBoolean
 } from './helper/tools'
 import { getCurrentSite } from './cookie'
 import { haveSameOrigin } from './helper/urlPolyfill'
@@ -32,7 +34,8 @@ export var DEFAULT_CONFIGURATION = {
   logsEndpoint: '',
   trackInteractions: false, //是否开启交互action收集
   allowedDDTracingOrigins: [], //
-  beforeSend: function (event) {}
+  beforeSend: function (event) {},
+  isServerError: function(request) {return false}  // 判断请求是否为error 请求
 }
 function trim(str) {
   return str.replace(TRIM_REGIX, '')
@@ -93,6 +96,9 @@ export function commonInit(userConfiguration, buildEnv) {
 
   if ('trackInteractions' in userConfiguration) {
     transportConfiguration.trackInteractions = !!userConfiguration.trackInteractions
+  }
+  if ('isServerError' in userConfiguration && isFunction(userConfiguration.isServerError) && isBoolean(userConfiguration.isServerError())) {
+    transportConfiguration.isServerError = userConfiguration.isServerError
   }
   return extend2Lev({}, DEFAULT_CONFIGURATION, transportConfiguration)
 }

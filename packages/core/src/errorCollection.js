@@ -109,7 +109,7 @@ export function trackNetworkError(configuration, errorObservable) {
     if (
       !isIntakeRequest(request.url, configuration) &&
       !request.isAborted &&
-      (isRejected(request) || isServerError(request))
+      (isRejected(request) || isServerError(request) || configuration.isServerError(request))
     ) {
       errorObservable.notify({
         message: format(type) + ' error ' + request.method + ' ' + request.url,
