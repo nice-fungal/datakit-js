@@ -26,7 +26,11 @@ export function cacheCookieAccess(name, options) {
       setCookie(name, value, expireDelay, options)
       cache = value
       cacheAccess()
-    }
+    },
+    clearCache: function() {
+      window.clearTimeout(timeout)
+      hasCache = false
+    },
   }
 }
 

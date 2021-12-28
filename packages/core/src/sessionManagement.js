@@ -41,6 +41,7 @@ export function startSessionManagement(
   var currentSession = retrieveActiveSession(sessionCookie)
   var currentSessionId = currentSession.id
   var expandOrRenewSession = throttle(function () {
+    sessionCookie.clearCache()
     var session = retrieveActiveSession(sessionCookie)
     var state = computeSessionState(session[productKey])
     session[productKey] = state.trackingType
@@ -59,6 +60,7 @@ export function startSessionManagement(
   }, COOKIE_ACCESS_DELAY)
 
   var expandSession = function () {
+    sessionCookie.clearCache()
     var session = retrieveActiveSession(sessionCookie)
     persistSession(session, sessionCookie)
   }
