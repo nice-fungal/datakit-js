@@ -143,8 +143,8 @@ function computeRequestTracingInfo(request) {
   }
   return {
     _dd: {
-      spanId: request.spanId.toDecimalString(),
-      traceId: request.traceId.toDecimalString()
+      spanId: request.spanId,
+      traceId: request.traceId
     },
     resource: { id: UUID() }
   }

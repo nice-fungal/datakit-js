@@ -5,10 +5,11 @@ import {
   isArray,
   includes,
   isFunction,
-  isBoolean
+  isBoolean,
 } from './helper/tools'
 import { getCurrentSite } from './cookie'
 import { haveSameOrigin } from './helper/urlPolyfill'
+import { TraceType } from './helper/enums'
 var TRIM_REGIX = /^\s+|\s+$/g
 export var DEFAULT_CONFIGURATION = {
   resourceSampleRate: 100,
@@ -32,8 +33,10 @@ export var DEFAULT_CONFIGURATION = {
   batchBytesLimit: 16 * ONE_KILO_BYTE,
   datakitUrl: '',
   logsEndpoint: '',
+  apmToolType: TraceType.ddtrace,
   trackInteractions: false, //是否开启交互action收集
-  allowedDDTracingOrigins: [], //
+  allowedDDTracingOrigins: [], //废弃
+  allowedTracingOrigins:[], // 新增
   beforeSend: function (event) {},
   isServerError: function(request) {return false}  // 判断请求是否为error 请求
 }
@@ -81,10 +84,12 @@ export function commonInit(userConfiguration, buildEnv) {
     cookieOptions: buildCookieOptions(userConfiguration)
   }
   if ('allowedDDTracingOrigins' in userConfiguration) {
-    transportConfiguration.allowedDDTracingOrigins =
+    transportConfiguration.allowedTracingOrigins =
       userConfiguration.allowedDDTracingOrigins
   }
-
+  if ('allowedTracingOrigins' in userConfiguration) {
+    transportConfiguration.allowedTracingOrigins = userConfiguration.allowedTracingOrigins
+  }
   if ('sampleRate' in userConfiguration) {
     transportConfiguration.sampleRate = userConfiguration.sampleRate
   }
@@ -100,7 +105,17 @@ export function commonInit(userConfiguration, buildEnv) {
   if ('isServerError' in userConfiguration && isFunction(userConfiguration.isServerError) && isBoolean(userConfiguration.isServerError())) {
     transportConfiguration.isServerError = userConfiguration.isServerError
   }
+  if ('traceId128Bit' in userConfiguration) {
+    transportConfiguration.traceId128Bit = userConfiguration.traceId128Bit // zipkin
+  }
+  if ('apmToolType' in userConfiguration && hasTraceType(userConfiguration.apmToolType)) {
+    transportConfiguration.apmToolType = userConfiguration.apmToolType
+  }
   return extend2Lev({}, DEFAULT_CONFIGURATION, transportConfiguration)
+}
+function hasTraceType(traceType) {
+  if (traceType && TraceType[traceType]) return true
+  return false
 }
 function mustUseSecureCookie(userConfiguration) {
   return (

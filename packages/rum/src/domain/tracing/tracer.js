@@ -3,9 +3,14 @@ import {
   each,
   extend,
   isArray,
+  TraceType,
   getOrigin
 } from '@cloudcare/browser-core'
-
+import { DDtraceTracer} from './ddtraceTracer'
+import { SkyWalkingTracer} from './skywalkingTracer'
+import { JaegerTracer} from './jaegerTracer'
+import { ZipKinTracer} from './zipkinTracer'
+import { OpenTelemetryTracer} from './opentelemetryTracer'
 export function clearTracingIfCancelled(context) {
   if (context.status === 0) {
     context.traceId = undefined
@@ -53,20 +58,10 @@ export function startTracer(configuration) {
     }
   }
 }
-
-function injectHeadersIfTracingAllowed(configuration, context, inject) {
-  if (!isTracingSupported() || !isAllowedUrl(configuration, context.url)) {
-    return
-  }
-  context.traceId = new TraceIdentifier()
-  context.spanId = new TraceIdentifier()
-  inject(makeTracingHeaders(context.traceId, context.spanId))
-}
-
 function isAllowedUrl(configuration, requestUrl) {
   var requestOrigin = getOrigin(requestUrl)
   var flag = false
-  each(configuration.allowedDDTracingOrigins, function (allowedOrigin) {
+  each(configuration.allowedTracingOrigins, function (allowedOrigin) {
     if (
       requestOrigin === allowedOrigin ||
       (allowedOrigin instanceof RegExp && allowedOrigin.test(requestOrigin))
@@ -78,63 +73,35 @@ function isAllowedUrl(configuration, requestUrl) {
   return flag
 }
 
-export function isTracingSupported() {
-  return getCrypto() !== undefined
-}
-
-function getCrypto() {
-  return window.crypto || window.msCrypto
-}
-
-function makeTracingHeaders(traceId, spanId) {
-  return {
-    'x-datadog-origin': 'rum',
-    // 'x-datadog-parent-id': spanId.toDecimalString(),
-    'x-datadog-sampled': '1',
-    'x-datadog-sampling-priority': '1',
-    'x-datadog-trace-id': traceId.toDecimalString()
+export function injectHeadersIfTracingAllowed(configuration, context, inject) {
+  if (!isAllowedUrl(configuration, context.url) || !configuration.apmToolType) {
+    return
   }
-}
-
-/* tslint:disable:no-bitwise */
-export function TraceIdentifier() {
-  this.buffer = new Uint8Array(8)
-  getCrypto().getRandomValues(this.buffer)
-  this.buffer[0] = this.buffer[0] & 0x7f
-}
-
-TraceIdentifier.prototype = {
-  // buffer: new Uint8Array(8),
-  toString: function (radix) {
-    var high = this.readInt32(0)
-    var low = this.readInt32(4)
-    var str = ''
-
-    while (1) {
-      var mod = (high % radix) * 4294967296 + low
-
-      high = Math.floor(high / radix)
-      low = Math.floor(mod / radix)
-      str = (mod % radix).toString(radix) + str
-
-      if (!high && !low) {
-        break
-      }
-    }
-    return str
-  },
-  toDecimalString: function () {
-    return this.toString(10)
-  },
-
-  readInt32: function (offset) {
-    return (
-      this.buffer[offset] * 16777216 +
-      (this.buffer[offset + 1] << 16) +
-      (this.buffer[offset + 2] << 8) +
-      this.buffer[offset + 3]
-    )
+  var tracer;
+  switch(configuration.apmToolType) {
+    case TraceType.ddtrace: 
+      tracer = new DDtraceTracer();
+      break;
+    case TraceType.skywalking:
+      tracer = new SkyWalkingTracer(configuration, context.url);
+      break;
+    case TraceType.zipkin:
+      tracer = new ZipKinTracer(configuration);
+      break;
+    case TraceType.jaeger:
+      tracer = new JaegerTracer(configuration);
+      break;
+    case TraceType.opentelemetry:
+      tracer = new OpenTelemetryTracer(configuration);
+      break;
+    default:
+      break;
   }
-}
+  if (!tracer || !tracer.isTracingSupported()) {
+    return
+  }
 
-/* tslint:enable:no-bitwise */
+  context.traceId = tracer.getTraceId()
+  context.spanId = tracer.getSpanId()
+  inject(tracer.makeTracingHeaders())
+}

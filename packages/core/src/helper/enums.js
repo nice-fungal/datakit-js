@@ -45,3 +45,11 @@ export var RequestType = {
   FETCH: ResourceType.FETCH,
   XHR: ResourceType.XHR
 }
+
+export var TraceType = {
+  ddtrace: 'ddtrace',
+  zipkin: 'zipkin',
+  skywalking: 'skywalking',
+  jaeger: 'jaeger',
+  opentelemetry: 'opentelemetry'
+}
