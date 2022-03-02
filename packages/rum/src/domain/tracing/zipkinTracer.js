@@ -21,7 +21,7 @@ function randomTraceId() {
   } else {
     this._traceId = rootSpanId
   }
-  this._spanId = rootSpanId()
+  this._spanId = rootSpanId
 }
 ZipKinTracer.prototype = {
  isTracingSupported: function() {

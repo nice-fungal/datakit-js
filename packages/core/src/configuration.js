@@ -37,6 +37,7 @@ export var DEFAULT_CONFIGURATION = {
   trackInteractions: false, //是否开启交互action收集
   allowedDDTracingOrigins: [], //废弃
   allowedTracingOrigins:[], // 新增
+  isServiceSampling: false, // 是否不抛弃采样是数据， 采用在服务端菜样的方式
   beforeSend: function (event) {},
   isServerError: function(request) {return false}  // 判断请求是否为error 请求
 }
@@ -110,6 +111,9 @@ export function commonInit(userConfiguration, buildEnv) {
   }
   if ('apmToolType' in userConfiguration && hasTraceType(userConfiguration.apmToolType)) {
     transportConfiguration.apmToolType = userConfiguration.apmToolType
+  }
+  if ('isServiceSampling' in userConfiguration && isBoolean(userConfiguration.isServiceSampling)) {
+    transportConfiguration.isServiceSampling = userConfiguration.isServiceSampling
   }
   return extend2Lev({}, DEFAULT_CONFIGURATION, transportConfiguration)
 }

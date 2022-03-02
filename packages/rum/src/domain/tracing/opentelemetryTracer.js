@@ -21,7 +21,7 @@ function randomTraceId() {
   } else {
     this._traceId = rootSpanId
   }
-  this._spanId = rootSpanId()
+  this._spanId = rootSpanId
 }
 OpenTelemetryTracer.prototype = {
  isTracingSupported: function() {

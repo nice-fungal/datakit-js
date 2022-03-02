@@ -21,7 +21,7 @@ function randomTraceId() {
   } else {
     this._traceId = rootSpanId
   }
-  this._spanId = rootSpanId()
+  this._spanId = rootSpanId
 }
 JaegerTracer.prototype = {
  isTracingSupported: function() {
@@ -39,7 +39,13 @@ JaegerTracer.prototype = {
  },
  makeTracingHeaders: function() {
    return {
-     'uber-trace-id': this.getUberTraceId(),
+    //  'uber-trace-id': this.getUberTraceId(),
+     'X-B3-TraceId': this.getTraceId(),
+     'X-B3-SpanId': this.getSpanId(),
+    //  'X-B3-ParentSpanId': '',
+     'X-B3-Sampled': '1',
+    //  'X-B3-Flags': '0'
    }
+   
  }
 }
