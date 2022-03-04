@@ -35,6 +35,7 @@ export var DEFAULT_CONFIGURATION = {
   datakitUrl: '',
   logsEndpoint: '',
   traceType: TraceType.DDTRACE,
+  traceId128Bit: false,
   trackInteractions: false, //是否开启交互action收集
   allowedDDTracingOrigins: [], //废弃
   allowedTracingOrigins:[], // 新增
@@ -107,7 +108,9 @@ export function commonInit(userConfiguration, buildEnv) {
   if ('isServerError' in userConfiguration && isFunction(userConfiguration.isServerError) && isBoolean(userConfiguration.isServerError())) {
     transportConfiguration.isServerError = userConfiguration.isServerError
   }
-  
+  if ('traceId128Bit' in userConfiguration) {
+    transportConfiguration.traceId128Bit = !!userConfiguration.traceId128Bit
+  }
   if ('traceType' in userConfiguration && hasTraceType(userConfiguration.traceType)) {
     transportConfiguration.traceType = userConfiguration.traceType
   }
