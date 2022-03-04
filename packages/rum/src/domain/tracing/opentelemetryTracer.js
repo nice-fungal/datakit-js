@@ -33,14 +33,13 @@ OpenTelemetryTracer.prototype = {
  getTraceId: function() {
    return this._traceId
  },
- 
+ getTraceParent: function() {
+  // '{version}-{traceId}-{spanId}-{sampleDecision}'
+  return '00-' + this._traceId + '-' + this._spanId + '-01'
+ },
  makeTracingHeaders: function() {
    return {
-     'x-b3-traceid': this.getTraceId(),
-     'x-b3-spanid': this.getSpanId(),
-    //  ''x-b3-parentspanid': '',
-     'x-b3-sampled': '1',
-    //  'x-b3-flags': '0'
+     'traceparent': this.getTraceParent()
    }
  }
 }
