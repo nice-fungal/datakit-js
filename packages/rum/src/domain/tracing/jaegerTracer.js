@@ -15,13 +15,13 @@ function randomTraceId() {
  */
  export function JaegerTracer(configuration) {
   const rootSpanId = randomTraceId();
-  this._traceId = randomTraceId() + rootSpanId // 默认用128bit,兼容其他配置
-  // if (configuration.traceId128Bit) {
-  //   // 128bit生成traceid
-  //   this._traceId = randomTraceId() + rootSpanId
-  // } else {
-  //   this._traceId = rootSpanId
-  // }
+  // this._traceId = randomTraceId() + rootSpanId // 默认用128bit,兼容其他配置
+  if (configuration.traceId128Bit) {
+    // 128bit生成traceid
+    this._traceId = randomTraceId() + rootSpanId
+  } else {
+    this._traceId = rootSpanId
+  }
   this._spanId = rootSpanId
 }
 JaegerTracer.prototype = {

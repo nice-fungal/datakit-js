@@ -15,7 +15,12 @@ function randomTraceId() {
  */
  export function ZipkinMultiTracer(configuration) {
   const rootSpanId = randomTraceId();
-  this._traceId = randomTraceId() + rootSpanId
+  if (configuration.traceId128Bit) {
+    // 128bit生成traceid
+    this._traceId = randomTraceId() + rootSpanId
+  } else {
+    this._traceId = rootSpanId
+  }
   this._spanId = rootSpanId
 }
 ZipkinMultiTracer.prototype = {
