@@ -9,8 +9,10 @@ import {
 import { DDtraceTracer} from './ddtraceTracer'
 import { SkyWalkingTracer} from './skywalkingTracer'
 import { JaegerTracer} from './jaegerTracer'
-import { ZipKinTracer} from './zipkinTracer'
-import { OpenTelemetryTracer} from './opentelemetryTracer'
+import { ZipkinSingleTracer} from './zipkinSingleTracer'
+import { ZipkinMultiTracer} from './zipkinMultiTracer'
+import { W3cTraceParentTracer} from './w3cTraceParentTracer'
+
 export function clearTracingIfCancelled(context) {
   if (context.status === 0) {
     context.traceId = undefined
@@ -74,26 +76,29 @@ function isAllowedUrl(configuration, requestUrl) {
 }
 
 export function injectHeadersIfTracingAllowed(configuration, context, inject) {
-  if (!isAllowedUrl(configuration, context.url) || !configuration.apmToolType) {
+  if (!isAllowedUrl(configuration, context.url) || !configuration.traceType) {
     return
   }
   var tracer;
-  switch(configuration.apmToolType) {
-    case TraceType.ddtrace: 
+  switch(configuration.traceType) {
+    case TraceType.DDTRACE: 
       tracer = new DDtraceTracer();
       break;
-    case TraceType.skywalking:
+    case TraceType.SKYWALKING_V3:
       tracer = new SkyWalkingTracer(configuration, context.url);
       break;
-    case TraceType.zipkin:
-      tracer = new ZipKinTracer(configuration);
+    case TraceType.ZIPKIN_MULTI_HEADER:
+      tracer = new ZipkinMultiTracer(configuration);
       break;
-    case TraceType.jaeger:
+    case TraceType.JAEGER:
       tracer = new JaegerTracer(configuration);
       break;
-    case TraceType.opentelemetry:
-      tracer = new OpenTelemetryTracer(configuration);
+    case TraceType.W3C_TRACEPARENT:
+      tracer = new W3cTraceParentTracer(configuration);
       break;
+      case TraceType.ZIPKIN_SINGLE_HEADER:
+        tracer = new ZipkinSingleTracer(configuration);
+        break;
     default:
       break;
   }

@@ -6,6 +6,7 @@ import {
   includes,
   isFunction,
   isBoolean,
+  values
 } from './helper/tools'
 import { getCurrentSite } from './cookie'
 import { haveSameOrigin } from './helper/urlPolyfill'
@@ -33,7 +34,7 @@ export var DEFAULT_CONFIGURATION = {
   batchBytesLimit: 16 * ONE_KILO_BYTE,
   datakitUrl: '',
   logsEndpoint: '',
-  apmToolType: TraceType.ddtrace,
+  traceType: TraceType.DDTRACE,
   trackInteractions: false, //是否开启交互action收集
   allowedDDTracingOrigins: [], //废弃
   allowedTracingOrigins:[], // 新增
@@ -106,11 +107,9 @@ export function commonInit(userConfiguration, buildEnv) {
   if ('isServerError' in userConfiguration && isFunction(userConfiguration.isServerError) && isBoolean(userConfiguration.isServerError())) {
     transportConfiguration.isServerError = userConfiguration.isServerError
   }
-  if ('traceId128Bit' in userConfiguration) {
-    transportConfiguration.traceId128Bit = userConfiguration.traceId128Bit // zipkin
-  }
-  if ('apmToolType' in userConfiguration && hasTraceType(userConfiguration.apmToolType)) {
-    transportConfiguration.apmToolType = userConfiguration.apmToolType
+  
+  if ('traceType' in userConfiguration && hasTraceType(userConfiguration.traceType)) {
+    transportConfiguration.traceType = userConfiguration.traceType
   }
   if ('isServiceSampling' in userConfiguration && isBoolean(userConfiguration.isServiceSampling)) {
     transportConfiguration.isServiceSampling = userConfiguration.isServiceSampling
@@ -118,7 +117,7 @@ export function commonInit(userConfiguration, buildEnv) {
   return extend2Lev({}, DEFAULT_CONFIGURATION, transportConfiguration)
 }
 function hasTraceType(traceType) {
-  if (traceType && TraceType[traceType]) return true
+  if (traceType && values[TraceType].indexOf(traceType) > -1) return true
   return false
 }
 function mustUseSecureCookie(userConfiguration) {

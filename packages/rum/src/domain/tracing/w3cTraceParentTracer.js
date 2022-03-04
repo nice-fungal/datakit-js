@@ -13,17 +13,12 @@ function randomTraceId() {
  * 
  * @param {*} configuration  配置信息
  */
- export function ZipKinTracer(configuration) {
+ export function W3cTraceParentTracer(configuration) {
   const rootSpanId = randomTraceId();
-  if (configuration.traceId128Bit) {
-    // 128bit生成traceid
-    this._traceId = randomTraceId() + rootSpanId
-  } else {
-    this._traceId = rootSpanId
-  }
+  this._traceId = randomTraceId() + rootSpanId
   this._spanId = rootSpanId
 }
-ZipKinTracer.prototype = {
+W3cTraceParentTracer.prototype = {
  isTracingSupported: function() {
    return true
  },
@@ -33,14 +28,13 @@ ZipKinTracer.prototype = {
  getTraceId: function() {
    return this._traceId
  },
- 
+ getTraceParent: function() {
+  // '{version}-{traceId}-{spanId}-{sampleDecision}'
+  return '00-' + this._traceId + '-' + this._spanId + '-01'
+ },
  makeTracingHeaders: function() {
    return {
-     'X-B3-TraceId': this.getTraceId(),
-     'X-B3-SpanId': this.getSpanId(),
-    //  'X-B3-ParentSpanId': '',
-     'X-B3-Sampled': '1',
-    //  'X-B3-Flags': '0'
+     'traceparent': this.getTraceParent()
    }
  }
 }

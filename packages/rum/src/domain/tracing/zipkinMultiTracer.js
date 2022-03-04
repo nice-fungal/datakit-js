@@ -13,18 +13,12 @@ function randomTraceId() {
  * 
  * @param {*} configuration  配置信息
  */
- export function JaegerTracer(configuration) {
+ export function ZipkinMultiTracer(configuration) {
   const rootSpanId = randomTraceId();
-  this._traceId = randomTraceId() + rootSpanId // 默认用128bit,兼容其他配置
-  // if (configuration.traceId128Bit) {
-  //   // 128bit生成traceid
-  //   this._traceId = randomTraceId() + rootSpanId
-  // } else {
-  //   this._traceId = rootSpanId
-  // }
+  this._traceId = randomTraceId() + rootSpanId
   this._spanId = rootSpanId
 }
-JaegerTracer.prototype = {
+ZipkinMultiTracer.prototype = {
  isTracingSupported: function() {
    return true
  },
@@ -34,14 +28,14 @@ JaegerTracer.prototype = {
  getTraceId: function() {
    return this._traceId
  },
- getUberTraceId: function() {
-  //{trace-id}:{span-id}:{parent-span-id}:{flags}
-  return this._traceId + ':' + this._spanId + ':' + '0' + ':' + '1'
- },
+ 
  makeTracingHeaders: function() {
    return {
-     'uber-trace-id': this.getUberTraceId(),
+     'X-B3-TraceId': this.getTraceId(),
+     'X-B3-SpanId': this.getSpanId(),
+    //  'X-B3-ParentSpanId': '',
+     'X-B3-Sampled': '1',
+    //  'X-B3-Flags': '0'
    }
-   
  }
 }
