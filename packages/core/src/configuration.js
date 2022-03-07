@@ -120,7 +120,7 @@ export function commonInit(userConfiguration, buildEnv) {
   return extend2Lev({}, DEFAULT_CONFIGURATION, transportConfiguration)
 }
 function hasTraceType(traceType) {
-  if (traceType && values[TraceType].indexOf(traceType) > -1) return true
+  if (traceType && values(TraceType).indexOf(traceType) > -1) return true
   return false
 }
 function mustUseSecureCookie(userConfiguration) {
