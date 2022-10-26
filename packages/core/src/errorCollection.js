@@ -10,12 +10,13 @@ import {
   ErrorSource,
   formatUnknownError,
   toStackTraceString,
-  formatErrorMessage
+  formatErrorMessage,
+  createHandlingStack
 } from './helper/errorTools'
 import { computeStackTrace, subscribe, unsubscribe } from './tracekit'
 import { Observable } from './helper/observable'
 import { isIntakeRequest } from './configuration'
-import { RequestType } from './helper/enums'
+import { RequestType, ErrorHandling } from './helper/enums'
 import { resetXhrProxy, startXhrProxy } from './xhrProxy'
 import { resetFetchProxy, startFetchProxy } from './fetchProxy'
 
@@ -37,16 +38,18 @@ export function startConsoleTracking(errorObservable) {
   originalConsoleError = console.error
   console.error = function () {
     originalConsoleError.apply(console, arguments)
+    const handlingStack = createHandlingStack()
     errorObservable.notify(
-      extend({}, buildErrorFromParams(toArray(arguments)), {
+      extend({}, buildErrorFromParams(toArray(arguments), handlingStack), {
         source: ErrorSource.CONSOLE,
-        startClocks: clocksNow()
+        startClocks: clocksNow(),
+        handling: ErrorHandling.HANDLED
       })
     )
   }
 }
 
-function buildErrorFromParams(params) {
+function buildErrorFromParams(params, handlingStack) {
   var firstErrorParam = find(params, function (param) {
     return param instanceof Error
   })
@@ -58,7 +61,8 @@ function buildErrorFromParams(params) {
     message: message,
     stack: firstErrorParam
       ? toStackTraceString(computeStackTrace(firstErrorParam))
-      : undefined
+      : undefined,
+    handlingStack: handlingStack
   }
 }
 
@@ -86,7 +90,8 @@ export function startRuntimeErrorTracking(errorObservable) {
       stack: error.stack,
       type: error.type,
       source: ErrorSource.SOURCE,
-      startClocks: clocksNow()
+      startClocks: clocksNow(),
+      handling: ErrorHandling.UNHANDLED
     })
   }
 

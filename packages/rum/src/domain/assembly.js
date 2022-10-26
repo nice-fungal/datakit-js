@@ -38,7 +38,7 @@ export function startRumAssembly(
     function (data) {
       var startTime = data.startTime
       var rawRumEvent = data.rawRumEvent
-      var savedCommonContext = data.savedGlobalContext
+      var savedCommonContext = data.savedCommonContext
       var customerContext = data.customerContext
       var viewContext = parentContexts.findView(startTime)
       var deviceContext = {
@@ -96,7 +96,7 @@ export function startRumAssembly(
             )
           : extend2Lev(rumContext, deviceContext, sessionAliasTag, viewContext, rawRumEvent)
         var serverRumEvent = withSnakeCaseKeys(rumEvent)
-        var context = extend2Lev(commonContext.context, customerContext)
+        var context = extend2Lev({},commonContext.context, customerContext)
         if (!isEmptyObject(context)) {
           serverRumEvent.tags = context
         }
@@ -121,7 +121,6 @@ export function startRumAssembly(
           // ) {
           //   console.log(serverRumEvent, '======serverRumEvent-====')
           // }
-          console.log(serverRumEvent, '======serverRumEvent-====')
           lifeCycle.notify(
             LifeCycleEventType.RUM_EVENT_COLLECTED,
             serverRumEvent
