@@ -40,7 +40,7 @@ export function startTracer(configuration) {
             context.init = shallowClone(context.init)
             var headers = []
             if (context.init.headers instanceof Headers) {
-              each(context.init.headers, function (value, key) {
+              context.init.headers.forEach(function(value, key) {
                 headers.push([key, value])
               })
             } else if (isArray(context.init.headers)) {
