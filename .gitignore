@@ -6,3 +6,4 @@ node_modules
 .vscode
 scripts/publish-oss.js
 lerna-debug.log
+.DS_Store

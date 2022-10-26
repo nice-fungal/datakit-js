@@ -19,5 +19,10 @@
     },
     "author": "dataflux",
     "license": "MIT",
-    "description": "DataFlux RUM Web 端数据指标监控"
+    "description": "DataFlux RUM Web 端数据指标监控",
+    "devDependencies": {
+        "@babel/cli": "7.14.8",
+        "@babel/core": "7.14.2",
+        "@babel/preset-env": "7.14.2"
+    }
 }
