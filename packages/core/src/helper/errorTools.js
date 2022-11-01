@@ -1,5 +1,5 @@
-import { each , noop} from './tools'
-import { computeStackTrace} from '../tracekit'
+import { each, noop, jsonStringify } from './tools'
+import { computeStackTrace } from '../tracekit'
 
 export var ErrorSource = {
   AGENT: 'agent',
@@ -10,22 +10,63 @@ export var ErrorSource = {
   CUSTOM: 'custom'
 }
 
-export function formatUnknownError(stackTrace, errorObject, nonErrorPrefix,handlingStack) {
+export function computeRawError(data) {
+  var stackTrace = data.stackTrace
+  var originalError = data.originalError
+  var handlingStack = data.handlingStack
+  var startClocks = data.startClocks
+  var nonErrorPrefix = data.nonErrorPrefix
+  var source = data.source
+  var handling = data.handling
+  if (
+    !stackTrace ||
+    (stackTrace.message === undefined && !(originalError instanceof Error))
+  ) {
+    return {
+      startClocks: startClocks,
+      source: source,
+      handling: handling,
+      originalError: originalError,
+      message: nonErrorPrefix + ' ' + jsonStringify(originalError),
+      stack: 'No stack, consider using an instance of Error',
+      handlingStack: handlingStack,
+      type: stackTrace && stackTrace.name
+    }
+  }
+
+  return {
+    startClocks: startClocks,
+    source: source,
+    handling: handling,
+    originalError: originalError,
+    message: stackTrace.message || 'Empty message',
+    stack: toStackTraceString(stackTrace),
+    handlingStack: handlingStack,
+    type: stackTrace.name,
+    causes: flattenErrorCauses(originalError, source)
+  }
+}
+export function formatUnknownError(
+  stackTrace,
+  errorObject,
+  nonErrorPrefix,
+  handlingStack
+) {
   if (
     !stackTrace ||
     (stackTrace.message === undefined && !(errorObject instanceof Error))
   ) {
     return {
-      message: nonErrorPrefix + '' + JSON.stringify(errorObject),
+      message: nonErrorPrefix + '' + jsonStringify(errorObject),
       stack: 'No stack, consider using an instance of Error',
-      handlingStack:handlingStack,
+      handlingStack: handlingStack,
       type: stackTrace && stackTrace.name
     }
   }
   return {
     message: stackTrace.message || 'Empty message',
     stack: toStackTraceString(stackTrace),
-    handlingStack:handlingStack,
+    handlingStack: handlingStack,
     type: stackTrace.name
   }
 }
@@ -36,16 +77,16 @@ export function formatUnknownError(stackTrace, errorObject, nonErrorPrefix,handl
  - Has to be called at the utmost position of the call stack.
  - No internal monitoring should encapsulate the function, that is why we need to use callMonitored inside of it.
  */
- export function createHandlingStack() {
+export function createHandlingStack() {
   /**
    * Skip the two internal frames:
    * - SDK API (console.error, ...)
    * - this function
    * in order to keep only the user calls
    */
-  const internalFramesToSkip = 2
-  const error = new Error()
-  let formattedStack
+  var internalFramesToSkip = 2
+  var error = new Error()
+  var formattedStack
 
   // IE needs to throw the error to fill in the stack trace
   if (!error.stack) {
@@ -56,14 +97,14 @@ export function formatUnknownError(stackTrace, errorObject, nonErrorPrefix,handl
     }
   }
 
-  const stackTrace = computeStackTrace(error)
+  var stackTrace = computeStackTrace(error)
   stackTrace.stack = stackTrace.stack.slice(internalFramesToSkip)
   formattedStack = toStackTraceString(stackTrace)
 
   return formattedStack
 }
 export function toStackTraceString(stack) {
-  var result = stack.name || 'Error' + ': ' + stack.message
+  var result = formatErrorMessage(stack)
   each(stack.stack, function (frame) {
     var func = frame.func === '?' ? '<anonymous>' : frame.func
     var args =
@@ -78,4 +119,27 @@ export function toStackTraceString(stack) {
 }
 export function formatErrorMessage(stack) {
   return (stack.name || 'Error') + ': ' + stack.message
+}
+export function getFileFromStackTraceString(stack) {
+  var execResult = /@ (.+)/.exec(stack)
+  return execResult && execResult[1]
+}
+export function flattenErrorCauses(error, parentSource) {
+  var currentError = error
+  var causes = []
+  while (
+    currentError &&
+    currentError.cause instanceof Error &&
+    causes.length < 10
+  ) {
+    var stackTrace = computeStackTrace(currentError.cause)
+    causes.push({
+      message: currentError.cause.message,
+      source: parentSource,
+      type: stackTrace && stackTrace.name,
+      stack: stackTrace && toStackTraceString(stackTrace)
+    })
+    currentError = currentError.cause
+  }
+  return causes.length ? causes : undefined
 }

@@ -1,38 +1,5 @@
-import { findCommaSeparatedValue, UUID, ONE_SECOND } from './helper/tools'
+import { findCommaSeparatedValue, UUID, ONE_SECOND } from '../helper/tools'
 export var COOKIE_ACCESS_DELAY = ONE_SECOND
-export function cacheCookieAccess(name, options) {
-  var timeout
-  var cache
-  var hasCache = false
-
-  var cacheAccess = function () {
-    hasCache = true
-    window.clearTimeout(timeout)
-    timeout = window.setTimeout(function () {
-      hasCache = false
-    }, COOKIE_ACCESS_DELAY)
-  }
-
-  return {
-    get: function () {
-      if (hasCache) {
-        return cache
-      }
-      cache = getCookie(name)
-      cacheAccess()
-      return cache
-    },
-    set: function (value, expireDelay) {
-      setCookie(name, value, expireDelay, options)
-      cache = value
-      cacheAccess()
-    },
-    clearCache: function() {
-      window.clearTimeout(timeout)
-      hasCache = false
-    },
-  }
-}
 
 export function setCookie(name, value, expireDelay, options) {
   var date = new Date()
@@ -56,6 +23,11 @@ export function setCookie(name, value, expireDelay, options) {
 export function getCookie(name) {
   return findCommaSeparatedValue(document.cookie, name)
 }
+
+export function deleteCookie(name, options) {
+  setCookie(name, '', 0, options)
+}
+
 
 export function areCookiesAuthorized(options) {
   if (document.cookie === undefined || document.cookie === null) {
