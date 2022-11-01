@@ -2,14 +2,18 @@ import {
   toServerDuration,
   extend,
   extend2Lev,
-  preferredTimeStamp,
   ActionType,
   RumEventType,
-  LifeCycleEventType
+  LifeCycleEventType,
+  UUID,
+  noop
 } from '@cloudcare/browser-core'
-import { trackActions } from './trackActions'
-
-export function startActionCollection(lifeCycle, configuration) {
+import { trackClickActions } from './trackClickActions'
+export function startActionCollection(
+  lifeCycle,
+  domMutationObservable,
+  configuration
+) {
   lifeCycle.subscribe(
     LifeCycleEventType.AUTO_ACTION_COMPLETED,
     function (action) {
@@ -19,11 +23,17 @@ export function startActionCollection(lifeCycle, configuration) {
       )
     }
   )
-  if (configuration.trackInteractions) {
-    trackActions(lifeCycle)
-  }
 
+  var actionContexts = { findActionId: noop }
+  if (configuration.trackInteractions) {
+    actionContexts = trackClickActions(
+      lifeCycle,
+      domMutationObservable,
+      configuration
+    ).actionContexts
+  }
   return {
+    actionContexts: actionContexts,
     addAction: function (action, savedCommonContext) {
       lifeCycle.notify(
         LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
@@ -45,23 +55,33 @@ function processAction(action) {
           },
           id: action.id,
           loadingTime: toServerDuration(action.duration),
+          frustration: {
+            type: action.frustrationTypes
+          },
           long_task: {
             count: action.counts.longTaskCount
           },
           resource: {
             count: action.counts.resourceCount
           }
+        },
+        _dd: {
+          action: {
+            target: action.target,
+            position: action.position
+          }
         }
       }
     : {
-      action: {
-        loadingTime: 0
+        action: {
+          loadingTime: 0
+        }
       }
-    }
   var customerContext = !isAutoAction(action) ? action.context : undefined
   var actionEvent = extend2Lev(
     {
       action: {
+        id: UUID(),
         target: {
           name: action.name
         },
@@ -75,7 +95,10 @@ function processAction(action) {
   return {
     customerContext: customerContext,
     rawRumEvent: actionEvent,
-    startTime: action.startClocks.relative
+    startTime: action.startClocks.relative,
+    domainContext: isAutoAction(action)
+      ? { event: action.event, events: action.events }
+      : {}
   }
 }
 

@@ -6,41 +6,42 @@ import {
   TraceType,
   getOrigin
 } from '@cloudcare/browser-core'
-import { DDtraceTracer} from './ddtraceTracer'
-import { SkyWalkingTracer} from './skywalkingTracer'
-import { JaegerTracer} from './jaegerTracer'
-import { ZipkinSingleTracer} from './zipkinSingleTracer'
-import { ZipkinMultiTracer} from './zipkinMultiTracer'
-import { W3cTraceParentTracer} from './w3cTraceParentTracer'
+import { DDtraceTracer } from './ddtraceTracer'
+import { SkyWalkingTracer } from './skywalkingTracer'
+import { JaegerTracer } from './jaegerTracer'
+import { ZipkinSingleTracer } from './zipkinSingleTracer'
+import { ZipkinMultiTracer } from './zipkinMultiTracer'
+import { W3cTraceParentTracer } from './w3cTraceParentTracer'
 
-export function clearTracingIfCancelled(context) {
+export function clearTracingIfNeeded(context) {
   if (context.status === 0 && !context.isAborted) {
     context.traceId = undefined
     context.spanId = undefined
   }
 }
 
-export function startTracer(configuration) {
+export function startTracer(configuration, sessionManager) {
   return {
-    clearTracingIfCancelled: clearTracingIfCancelled,
+    clearTracingIfNeeded: clearTracingIfNeeded,
     traceFetch: function (context) {
       return injectHeadersIfTracingAllowed(
         configuration,
         context,
+        sessionManager,
         function (tracingHeaders) {
-          // if (context.input instanceof Request && (context.init))
-          
-          if (context.input instanceof Request && (!context.init || !context.init.headers)) {
+          if (
+            context.input instanceof Request &&
+            (!context.init || !context.init.headers)
+          ) {
             context.input = new Request(context.input)
-            each(tracingHeaders, function(value,key) {
+            each(tracingHeaders, function (value, key) {
               context.input.headers.append(key, value)
             })
-            
           } else {
             context.init = shallowClone(context.init)
             var headers = []
             if (context.init.headers instanceof Headers) {
-              context.init.headers.forEach(function(value, key) {
+              context.init.headers.forEach(function (value, key) {
                 headers.push([key, value])
               })
             } else if (isArray(context.init.headers)) {
@@ -55,13 +56,14 @@ export function startTracer(configuration) {
             // context.init.headers = headers.concat(objectEntries(tracingHeaders))
             // 转换成对象，兼容部分
             var headersMap = {}
-            each(headers.concat(objectEntries(tracingHeaders)), function(header){
-              headersMap[header[0]] = header[1]
-            })
+            each(
+              headers.concat(objectEntries(tracingHeaders)),
+              function (header) {
+                headersMap[header[0]] = header[1]
+              }
+            )
             context.init.headers = headersMap
-            
           }
-          
         }
       )
     },
@@ -69,6 +71,7 @@ export function startTracer(configuration) {
       return injectHeadersIfTracingAllowed(
         configuration,
         context,
+        sessionManager,
         function (tracingHeaders) {
           each(tracingHeaders, function (value, name) {
             xhr.setRequestHeader(name, value)
@@ -93,32 +96,41 @@ function isAllowedUrl(configuration, requestUrl) {
   return flag
 }
 
-export function injectHeadersIfTracingAllowed(configuration, context, inject) {
-  if (!isAllowedUrl(configuration, context.url) || !configuration.traceType) {
+export function injectHeadersIfTracingAllowed(
+  configuration,
+  context,
+  sessionManager,
+  inject
+) {
+  if (
+    !isAllowedUrl(configuration, context.url) ||
+    !configuration.traceType ||
+    !sessionManager.findTrackedSession()
+  ) {
     return
   }
-  var tracer;
-  switch(configuration.traceType) {
-    case TraceType.DDTRACE: 
-      tracer = new DDtraceTracer();
-      break;
+  var tracer
+  switch (configuration.traceType) {
+    case TraceType.DDTRACE:
+      tracer = new DDtraceTracer()
+      break
     case TraceType.SKYWALKING_V3:
-      tracer = new SkyWalkingTracer(configuration, context.url);
-      break;
+      tracer = new SkyWalkingTracer(configuration, context.url)
+      break
     case TraceType.ZIPKIN_MULTI_HEADER:
-      tracer = new ZipkinMultiTracer(configuration);
-      break;
+      tracer = new ZipkinMultiTracer(configuration)
+      break
     case TraceType.JAEGER:
-      tracer = new JaegerTracer(configuration);
-      break;
+      tracer = new JaegerTracer(configuration)
+      break
     case TraceType.W3C_TRACEPARENT:
-      tracer = new W3cTraceParentTracer(configuration);
-      break;
+      tracer = new W3cTraceParentTracer(configuration)
+      break
     case TraceType.ZIPKIN_SINGLE_HEADER:
-      tracer = new ZipkinSingleTracer(configuration);
-      break;
+      tracer = new ZipkinSingleTracer(configuration)
+      break
     default:
-      break;
+      break
   }
   if (!tracer || !tracer.isTracingSupported()) {
     return
