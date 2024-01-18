@@ -232,6 +232,7 @@ export var matchList = function (list, value, useStartsWith) {
 }
 // https://github.com/jquery/jquery/blob/a684e6ba836f7c553968d7d026ed7941e1a612d8/src/selector/escapeSelector.js
 export var cssEscape = function (str) {
+  str = str + ''
   if (window.CSS && window.CSS.escape) {
     return window.CSS.escape(str)
   }
@@ -1649,23 +1650,6 @@ export function isNullUndefinedDefaultValue(data, defaultValue) {
   }
 }
 
-export function requestIdleCallback(callback, opts) {
-  // Use 'requestIdleCallback' when available: it will throttle the mutation processing if the
-  // browser is busy rendering frames (ex: when frames are below 60fps). When not available, the
-  // fallback on 'requestAnimationFrame' will still ensure the mutations are processed after any
-  // browser rendering process (Layout, Recalculate Style, etc.), so we can serialize DOM nodes
-  // efficiently.
-  if (window.requestIdleCallback) {
-    var id = window.requestIdleCallback(callback, opts)
-    return function () {
-      return window.cancelIdleCallback(id)
-    }
-  }
-  var id = window.requestAnimationFrame(callback)
-  return function () {
-    return window.cancelAnimationFrame(id)
-  }
-}
 export function objectHasValue(object, value) {
   return some(keys(object), function (key) {
     return object[key] === value
