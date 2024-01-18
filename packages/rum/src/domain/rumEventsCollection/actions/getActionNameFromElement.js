@@ -1,6 +1,7 @@
 import { safeTruncate, isIE, find, map, filter } from '@cloudcare/browser-core'
 
-var DEFAULT_PROGRAMMATIC_ATTRIBUTE = 'data-guance-action-name'
+export var DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE =
+  'data-guance-action-name'
 
 export function getActionNameFromElement(element, userProgrammaticAttribute) {
   // Proceed to get the action name in two steps:
@@ -12,7 +13,7 @@ export function getActionNameFromElement(element, userProgrammaticAttribute) {
   return (
     getActionNameFromElementProgrammatically(
       element,
-      DEFAULT_PROGRAMMATIC_ATTRIBUTE
+      DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE
     ) ||
     (userProgrammaticAttribute &&
       getActionNameFromElementProgrammatically(
@@ -117,7 +118,7 @@ var priorityStrategies = [
         return Boolean(label)
       })
       labelledByAttribute = map(labelledByAttribute, function (ele) {
-        return getTextualContent(ele)
+        return getTextualContent(ele, userProgrammaticAttribute)
       })
       return labelledByAttribute.join(' ')
     }
@@ -135,9 +136,9 @@ var priorityStrategies = [
     return element.getAttribute('placeholder')
   },
   // SELECT first OPTION text
-  function (element) {
+  function (element, userProgrammaticAttribute) {
     if ('options' in element && element.options.length > 0) {
-      return getTextualContent(element.options[0])
+      return getTextualContent(element.options[0], userProgrammaticAttribute)
     }
   }
 ]
@@ -231,7 +232,9 @@ function getTextualContent(element, userProgrammaticAttribute) {
     }
 
     // remove the text of elements with programmatic attribute value
-    removeTextFromElements('[' + DEFAULT_PROGRAMMATIC_ATTRIBUTE + ']')
+    removeTextFromElements(
+      '[' + DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE + ']'
+    )
 
     if (userProgrammaticAttribute) {
       removeTextFromElements('[' + userProgrammaticAttribute + ']')

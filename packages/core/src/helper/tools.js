@@ -1,3 +1,6 @@
+import { DOM_EVENT } from './enums'
+import { getZoneJsOriginalValue } from './getZoneJsOriginalValue'
+
 var ArrayProto = Array.prototype
 var FuncProto = Function.prototype
 var ObjProto = Object.prototype
@@ -260,6 +263,7 @@ export var isObject = function (obj) {
   if (obj === null) return false
   return toString.call(obj) === '[object Object]'
 }
+
 export var isEmptyObject = function (obj) {
   if (isObject(obj)) {
     for (var key in obj) {
@@ -364,45 +368,42 @@ export var now =
     return new Date().getTime()
   }
 
-export var throttle = function (func, wait, options) {
-  var timeout, context, args, result
-  var previous = 0
-  if (!options) options = {}
-
-  var later = function () {
-    previous = options.leading === false ? 0 : new Date().getTime()
-    timeout = null
-    result = func.apply(context, args)
-    if (!timeout) context = args = null
-  }
-
-  var throttled = function () {
-    args = arguments
-    var now = new Date().getTime()
-    if (!previous && options.leading === false) previous = now
-    //下次触发 func 剩余的时间
-    var remaining = wait - (now - previous)
-    context = this
-    // 如果没有剩余的时间了或者你改了系统时间
-    if (remaining <= 0 || remaining > wait) {
-      if (timeout) {
-        clearTimeout(timeout)
-        timeout = null
+export var throttle = function (fn, wait, options) {
+  var needLeadingExecution =
+    options && options.leading !== undefined ? options.leading : true
+  var needTrailingExecution =
+    options && options.trailing !== undefined ? options.trailing : true
+  let inWaitPeriod = false
+  let pendingExecutionWithParameters
+  let pendingTimeoutId
+  var context = this
+  return {
+    throttled: function () {
+      if (inWaitPeriod) {
+        pendingExecutionWithParameters = arguments
+        return
       }
-      previous = now
-      result = func.apply(context, args)
-      if (!timeout) context = args = null
-    } else if (!timeout && options.trailing !== false) {
-      timeout = setTimeout(later, remaining)
+
+      if (needLeadingExecution) {
+        fn.apply(context, arguments)
+      } else {
+        pendingExecutionWithParameters = arguments
+      }
+      inWaitPeriod = true
+      pendingTimeoutId = setTimeout(function () {
+        if (needTrailingExecution && pendingExecutionWithParameters) {
+          fn.apply(context, pendingExecutionWithParameters)
+        }
+        inWaitPeriod = false
+        pendingExecutionWithParameters = undefined
+      }, wait)
+    },
+    cancel: function () {
+      clearTimeout(pendingTimeoutId)
+      inWaitPeriod = false
+      pendingExecutionWithParameters = undefined
     }
-    return result
   }
-  throttled.cancel = function () {
-    clearTimeout(timeout)
-    previous = 0
-    timeout = null
-  }
-  return throttled
 }
 export var hashCode = function (str) {
   if (typeof str !== 'string') {
@@ -1632,7 +1633,9 @@ export function currentDrift() {
   // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
   return Math.round(dateNow() - (getNavigationStart() + performance.now()))
 }
-
+export function addDuration(a, b) {
+  return a + b
+}
 function getCorrectedTimeStamp(relativeTime) {
   var correctedOrigin = dateNow() - performance.now()
   // apply correction only for positive drift
@@ -1676,8 +1679,8 @@ export function safeTruncate(candidate, length) {
   return candidate.slice(0, length)
 }
 
-export function addEventListener(emitter, event, listener, options) {
-  return addEventListeners(emitter, [event], listener, options)
+export function addEventListener(eventTarget, event, listener, options) {
+  return addEventListeners(eventTarget, [event], listener, options)
 }
 
 /**
@@ -1695,8 +1698,9 @@ export function addEventListener(emitter, event, listener, options) {
  * * with `once: true`, the listener will be called at most once, even if different events are
  *   listened
  */
-export function addEventListeners(emitter, events, listener, options) {
-  var wrapedListener =
+
+export function addEventListeners(eventTarget, events, listener, options) {
+  var wrappedListener =
     options && options.once
       ? function (event) {
           stop()
@@ -1708,12 +1712,15 @@ export function addEventListeners(emitter, events, listener, options) {
     options && options.passive
       ? { capture: options.capture, passive: options.passive }
       : options && options.capture
+  var add = getZoneJsOriginalValue(eventTarget, 'addEventListener')
+
   each(events, function (event) {
-    emitter.addEventListener(event, wrapedListener, options)
+    add.call(eventTarget, event, wrappedListener, options)
   })
   var stop = function () {
+    var remove = getZoneJsOriginalValue(eventTarget, 'removeEventListener')
     each(events, function (event) {
-      emitter.removeEventListener(event, wrapedListener, options)
+      remove.call(eventTarget, event, wrappedListener, options)
     })
   }
   return {
@@ -1908,4 +1915,66 @@ export function isNullUndefinedDefaultValue(data, defaultValue) {
   } else {
     return defaultValue
   }
+}
+
+export function runOnReadyState(expectedReadyState, callback) {
+  if (
+    document.readyState === expectedReadyState ||
+    document.readyState === 'complete'
+  ) {
+    callback()
+  } else {
+    var eventName =
+      expectedReadyState === 'complete'
+        ? DOM_EVENT.LOAD
+        : DOM_EVENT.DOM_CONTENT_LOADED
+    addEventListener(window, eventName, callback, { once: true })
+  }
+}
+
+export function requestIdleCallback(callback, opts) {
+  // Use 'requestIdleCallback' when available: it will throttle the mutation processing if the
+  // browser is busy rendering frames (ex: when frames are below 60fps). When not available, the
+  // fallback on 'requestAnimationFrame' will still ensure the mutations are processed after any
+  // browser rendering process (Layout, Recalculate Style, etc.), so we can serialize DOM nodes
+  // efficiently.
+  if (window.requestIdleCallback) {
+    var id = window.requestIdleCallback(callback, opts)
+    return function () {
+      return window.cancelIdleCallback(id)
+    }
+  }
+  var id = window.requestAnimationFrame(callback)
+  return function () {
+    return window.cancelAnimationFrame(id)
+  }
+}
+export function objectHasValue(object, value) {
+  return some(keys(object), function (key) {
+    return object[key] === value
+  })
+}
+export function startsWith(candidate, search) {
+  return candidate.slice(0, search.length) === search
+}
+
+export function endsWith(candidate, search) {
+  return candidate.slice(-search.length) === search
+}
+
+export function tryToClone(response) {
+  try {
+    return response.clone()
+  } catch (e) {
+    // clone can throw if the response has already been used by another instrumentation or is disturbed
+    return
+  }
+}
+export function isHashAnAnchor(hash) {
+  var correspondingId = hash.substr(1)
+  return !!document.getElementById(correspondingId)
+}
+export function getPathFromHash(hash) {
+  var index = hash.indexOf('?')
+  return index < 0 ? hash : hash.slice(0, index)
 }

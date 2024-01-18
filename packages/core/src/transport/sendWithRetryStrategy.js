@@ -13,14 +13,14 @@ export var MAX_BACKOFF_TIME = 256 * ONE_SECOND
 export var INITIAL_BACKOFF_TIME = ONE_SECOND
 
 var TransportStatus = {
-  UP: 'UP',
-  FAILURE_DETECTED: 'FAILURE_DETECTED',
-  DOWN: 'DOWN'
+  UP: 0,
+  FAILURE_DETECTED: 1,
+  DOWN: 2
 }
 
 var RetryReason = {
-  AFTER_SUCCESS: 'AFTER_SUCCESS',
-  AFTER_RESUME: 'AFTER_RESUME'
+  AFTER_SUCCESS: 0,
+  AFTER_RESUME: 1
 }
 
 export function sendWithRetryStrategy(
@@ -92,7 +92,7 @@ function send(payload, state, sendStrategy, responseData) {
   state.bandwidthMonitor.add(payload)
   sendStrategy(payload, function (response) {
     state.bandwidthMonitor.remove(payload)
-    if (wasRequestSuccessful(response)) {
+    if (!shouldRetryRequest(response)) {
       state.transportStatus = TransportStatus.UP
       onSuccess()
     } else {
@@ -135,10 +135,15 @@ function retryQueuedPayloads(reason, state, sendStrategy, reportError) {
   }
 }
 
-function wasRequestSuccessful(response) {
-  return response.status !== 0 && response.status < 500
+function shouldRetryRequest(response) {
+  return (
+    response.type !== 'opaque' &&
+    ((response.status === 0 && !navigator.onLine) ||
+      response.status === 408 ||
+      response.status === 429 ||
+      response.status >= 500)
+  )
 }
-
 export function newRetryState() {
   return {
     transportStatus: TransportStatus.UP,

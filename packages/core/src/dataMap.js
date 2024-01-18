@@ -1,6 +1,5 @@
 import { RumEventType } from './helper/enums'
 export var commonTags = {
-  action_id: 'action.id',
   sdk_name: '_dd.sdk_name',
   sdk_version: '_dd.sdk_version',
   app_id: 'application.id',
@@ -13,6 +12,7 @@ export var commonTags = {
   session_id: 'session.id',
   session_type: 'session.type',
   session_sampling: 'session.is_sampling',
+  session_has_replay: 'session.has_replay',
   is_signin: 'user.is_signin',
   os: 'device.os',
   os_version: 'device.os_version',
@@ -32,6 +32,10 @@ export var commonTags = {
   view_path_group: 'view.path_group',
   view_url_query: 'view.url_query'
 }
+export var commonFields = {
+  action_id: 'action.id',
+  view_in_foreground: 'view.in_foreground'
+}
 // 需要用双引号将字符串类型的field value括起来， 这里有数组标示[string, path]
 export var dataMap = {
   view: {
@@ -42,6 +46,7 @@ export var dataMap = {
       is_active: 'view.is_active'
     },
     fields: {
+      session_replay_stats: '_dd.replay_stats',
       view_error_count: 'view.error.count',
       view_resource_count: 'view.resource.count',
       view_long_task_count: 'view.long_task.count',
@@ -62,7 +67,9 @@ export var dataMap = {
       time_to_interactive: 'view.tti',
       dom: 'view.dom',
       dom_ready: 'view.dom_ready',
-      time_spent: 'view.time_spent'
+      time_spent: 'view.time_spent',
+      in_foreground_periods: 'view.in_foreground_periods',
+      frustration_count: 'view.frustration.count'
     }
   },
   resource: {
