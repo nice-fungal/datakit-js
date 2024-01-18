@@ -8,8 +8,10 @@ cp ./node_modules/@cloudcare/browser-core/package.json ../packages/core/package.
 
 rm -r ../packages/rum/src
 rm ../packages/rum/package.json
+rm ../packages/rum/README.md
 cp -r ./node_modules/@cloudcare/browser-rum/src ../packages/rum/src
 cp ./node_modules/@cloudcare/browser-rum/package.json ../packages/rum/package.json
+cp ./node_modules/@cloudcare/browser-rum/README.md ../packages/rum/README.md
 
 rm -r ../packages/worker/src
 rm ../packages/worker/package.json
