@@ -32,6 +32,7 @@ export * from './browser/pageExitObservable'
 export * from './browser/htmlDomUtils'
 export * from './browser/addEventListener'
 export * from './browser/runOnReadyState'
+export * from './browser/scroll'
 
 export * from './dataMap'
 export * from './init'
@@ -47,3 +48,5 @@ export * from './helper/serialisation/heavyCustomerDataWarning'
 export * from './helper/serialisation/jsonStringify'
 export * from './helper/serialisation/rowData'
 export * from './user'
+
+export * from './telemetry/telemetry'

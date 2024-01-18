@@ -30,6 +30,13 @@ export function validateAndBuildConfiguration(initConfiguration) {
     display.error('Sample Rate should be a number between 0 and 100')
     return
   }
+  if (
+    initConfiguration.telemetrySampleRate !== undefined &&
+    !isPercentage(initConfiguration.telemetrySampleRate)
+  ) {
+    display.error('Telemetry Sample Rate should be a number between 0 and 100')
+    return
+  }
   var sessionSampleRate =
     initConfiguration.sessionSampleRate || initConfiguration.sampleRate
   return assign(
@@ -45,6 +52,14 @@ export function validateAndBuildConfiguration(initConfiguration) {
       service: initConfiguration.service,
       version: initConfiguration.version,
       env: initConfiguration.env,
+      telemetrySampleRate: isNullUndefinedDefaultValue(
+        initConfiguration.telemetrySampleRate,
+        100
+      ),
+      telemetryEnabled: isNullUndefinedDefaultValue(
+        initConfiguration.telemetryEnabled,
+        false
+      ),
       silentMultipleInit: !!initConfiguration.silentMultipleInit,
 
       /**
@@ -54,6 +69,7 @@ export function validateAndBuildConfiguration(initConfiguration) {
       batchBytesLimit: 16 * ONE_KIBI_BYTE,
 
       eventRateLimiterThreshold: 3000,
+      maxTelemetryEventsPerPage: 15,
 
       /**
        * flush automatically, aim to be lower than ALB connection timeout

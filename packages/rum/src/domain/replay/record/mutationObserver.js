@@ -4,7 +4,8 @@ import {
   isNodeShadowHost,
   getParentNode,
   isNullUndefinedDefaultValue,
-  monitor
+  monitor,
+  isNodeShadowRoot
 } from '@cloudcare/browser-core'
 import { getMutationObserverConstructor } from '../../domMutationCollection'
 import { NodePrivacyLevel } from '../../../constants'

@@ -12,6 +12,7 @@ import {
   display,
   assign
 } from '@cloudcare/browser-core'
+import { getDisplayContext } from './contexts/displayContext'
 var SessionType = {
   SYNTHETICS: 'synthetics',
   USER: 'user'
@@ -94,6 +95,7 @@ export function startRumAssembly(
 
       if (session && viewContext && urlContext) {
         var actionId = actionContexts.findActionId(startTime)
+        var actionIds = actionContexts.findAllActionId(startTime)
         var commonContext = savedCommonContext || buildCommonContext()
         var rumContext = {
           _gc: {
@@ -135,8 +137,9 @@ export function startRumAssembly(
           },
           action:
             needToAssembleWithAction(rawRumEvent) && actionId
-              ? { id: actionId }
-              : undefined
+              ? { id: actionId, ids: actionIds }
+              : undefined,
+          display: getDisplayContext()
         }
 
         var rumEvent = extend2Lev(rumContext, viewContext, rawRumEvent)
