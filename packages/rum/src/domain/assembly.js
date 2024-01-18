@@ -67,6 +67,7 @@ export function startRumAssembly(
       var session = sessionManager.findTrackedSession(
         rawRumEvent.type !== RumEventType.VIEW ? startTime : undefined
       )
+
       if (session && viewContext && urlContext) {
         var actionId = actionContexts.findActionId(startTime)
         var commonContext = savedCommonContext || buildCommonContext()
