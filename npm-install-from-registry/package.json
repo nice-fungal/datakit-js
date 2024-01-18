@@ -2,7 +2,7 @@
   "name": "npm-install-from-registry",
   "version": "0.0.0",
   "devDependencies": {
-    "@cloudcare/browser-core": "2.0.17",
-    "@cloudcare/browser-rum": "3.0.19"
+    "@cloudcare/browser-core": "2.0.18",
+    "@cloudcare/browser-rum": "3.0.20"
   }
 }
