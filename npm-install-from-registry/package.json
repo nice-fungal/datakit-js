@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "devDependencies": {
     "@cloudcare/browser-core": "3.0.23",
-    "@cloudcare/browser-rum": "3.0.24",
+    "@cloudcare/browser-rum": "3.0.25",
     "@cloudcare/browser-worker": "3.0.23"
   }
 }
