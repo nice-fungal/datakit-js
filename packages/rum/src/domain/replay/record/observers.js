@@ -236,7 +236,7 @@ function tryToComputeCoordinates(event) {
   if (!Number.isFinite(x) || !Number.isFinite(y)) {
     return undefined
   }
-  return { x, y }
+  return { x: x, y: y }
 }
 
 function initScrollObserver(cb, defaultPrivacyLevel, elementsScrollPositions) {
@@ -535,20 +535,23 @@ export function initFrustrationObserver(lifeCycle, frustrationCb) {
       if (
         data.rawRumEvent.type === RumEventType.ACTION &&
         data.rawRumEvent.action.type === ActionType.CLICK &&
-        data.rawRumEvent.action.frustration?.type?.length &&
+        data.rawRumEvent.action.frustration &&
+        data.rawRumEvent.action.frustration.type &&
+        data.rawRumEvent.action.frustration.type.length &&
         'events' in data.domainContext &&
-        data.domainContext.events?.length
+        data.domainContext.events &&
+        data.domainContext.events.length
       ) {
-        frustrationCb({
-          timestamp: data.rawRumEvent.date,
-          type: RecordType.FrustrationRecord,
-          data: {
-            frustrationTypes: data.rawRumEvent.action.frustration.type,
-            recordIds: data.domainContext.events.map(function (e) {
-              return getRecordIdForEvent(e)
-            })
-          }
-        })
+        // frustrationCb({
+        //   timestamp: data.rawRumEvent.date,
+        //   type: RecordType.FrustrationRecord,
+        //   data: {
+        //     frustrationTypes: data.rawRumEvent.action.frustration.type,
+        //     recordIds: data.domainContext.events.map(function (e) {
+        //       return getRecordIdForEvent(e)
+        //     })
+        //   }
+        // })
       }
     }
   ).unsubscribe

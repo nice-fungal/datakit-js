@@ -2,7 +2,8 @@ import {
   noop,
   getChildNodes,
   isNodeShadowHost,
-  getParentNode
+  getParentNode,
+  isNullUndefinedDefaultValue
 } from '@cloudcare/browser-core'
 import { getMutationObserverConstructor } from '../../domMutationCollection'
 import { NodePrivacyLevel } from '../../../constants'
@@ -109,7 +110,14 @@ function processMutations(
   )
   var adds = _processChildListMutations.adds
   var removes = _processChildListMutations.removes
-  var hasBeenSerialized = _processChildListMutations.hasBeenSerialized
+  //   var hasBeenSerialized = _processChildListMutations.hasBeenSerialized
+  var serializedNodeIds = _processChildListMutations.serializedNodeIds
+  function hasBeenSerialized(node) {
+    return (
+      hasSerializedNode(node) &&
+      serializedNodeIds.has(getSerializedNodeId(node))
+    )
+  }
   var texts = processCharacterDataMutations(
     filteredMutations.filter(function (mutation) {
       return (
@@ -121,15 +129,15 @@ function processMutations(
 
   var attributes = processAttributesMutations(
     filteredMutations.filter(function (mutation) {
-      mutation.type === 'attributes' && !hasBeenSerialized(mutation.target)
+      return (
+        mutation.type === 'attributes' && !hasBeenSerialized(mutation.target)
+      )
     }),
     configuration
   )
-
   if (!texts.length && !attributes.length && !removes.length && !adds.length) {
     return
   }
-
   mutationCallback({
     adds: adds,
     removes: removes,
@@ -236,6 +244,7 @@ function processChildListMutations(
   return {
     adds: addedNodeMutations,
     removes: removedNodeMutations,
+    serializedNodeIds: serializedNodeIds,
     hasBeenSerialized: hasBeenSerialized
   }
 
@@ -293,8 +302,9 @@ function processCharacterDataMutations(mutations, configuration) {
     textMutations.push({
       id: getSerializedNodeId(mutation.target),
       // TODO: pass a valid "ignoreWhiteSpace" argument
-      value:
-        getTextContent(mutation.target, false, parentNodePrivacyLevel) ?? null
+      value: isNullUndefinedDefaultValue(
+        getTextContent(mutation.target, false, parentNodePrivacyLevel, null)
+      )
     })
   }
 
@@ -308,7 +318,7 @@ function processAttributesMutations(mutations, configuration) {
   var handledElements = new Map()
   var filteredMutations = mutations.filter(function (mutation) {
     var handledAttributes = handledElements.get(mutation.target)
-    if (handledAttributes?.has(mutation.attributeName)) {
+    if (handledAttributes && handledAttributes.has(mutation.attributeName)) {
       return false
     }
     if (!handledAttributes) {
