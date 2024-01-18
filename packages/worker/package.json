@@ -1,12 +1,12 @@
 {
-    "name": "@cloudcare/browser-core",
+    "name": "@cloudcare/browser-worker",
     "version": "3.0.22",
-    "main": "cjs/index.js",
-    "module": "esm/index.js",
+    "main": "bundle/worker.js",
     "scripts": {
-        "build": "run-p build:cjs build:esm",
-        "build:cjs": "rm -rf cjs && babel --config-file ./babel.cjs.json --out-dir cjs ./src",
-        "build:esm": "rm -rf esm && babel --config-file ./babel.esm.json --out-dir esm ./src "
+        "build": "rm -rf bundle && webpack --mode=production && ./scripts/build-worker-string.js"
+    },
+    "dependencies": {
+        "@cloudcare/browser-core": "^3.0.22"
     },
     "keywords": [
         "dataflux",
@@ -16,6 +16,9 @@
     "repository": {
         "url": "https://github.com/DataFlux-cn/datakit-js",
         "type": "git"
+    },
+    "publishConfig": {
+        "access": "public"
     },
     "author": "dataflux",
     "license": "MIT",
