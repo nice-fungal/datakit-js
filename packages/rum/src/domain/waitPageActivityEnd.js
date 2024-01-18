@@ -5,7 +5,9 @@ import {
   LifeCycleEventType,
   some,
   matchList,
-  instrumentMethodAndCallOriginal
+  instrumentMethodAndCallOriginal,
+  setTimeout,
+  clearTimeout
 } from '@cloudcare/browser-core'
 
 // Delay to wait for a page activity to validate the tracking process
@@ -75,10 +77,11 @@ export function doWaitPageActivityEnd(
   }, PAGE_ACTIVITY_VALIDATION_DELAY)
 
   var maxDurationTimeoutId =
-    maxDuration &&
-    setTimeout(function () {
-      return complete({ hadActivity: true, end: timeStampNow() })
-    }, maxDuration)
+    maxDuration !== undefined
+      ? setTimeout(function () {
+          return complete({ hadActivity: true, end: timeStampNow() })
+        }, maxDuration)
+      : undefined
 
   var pageActivitySubscription = pageActivityObservable.subscribe(function (
     data
