@@ -33,8 +33,8 @@ export function startRumBatch(
       }
     }
   )
-  telemetryEventObservable.subscribe(function (event) {
-    batch.add(event)
-  })
+  // telemetryEventObservable.subscribe(function (event) {
+  //   batch.add(event)
+  // })
   return batch
 }
